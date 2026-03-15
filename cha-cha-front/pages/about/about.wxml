@@ -1,0 +1,59 @@
+<view class="about-container">
+  <view class="about-header">
+    <image class="app-logo" src="/assets/images/logo.svg" mode="aspectFit"></image>
+    <text class="app-name">查查助手</text>
+    <text class="app-version">版本 1.0.0</text>
+  </view>
+
+  <view class="about-section">
+    <view class="section-title">关于我们</view>
+    <view class="section-content">
+      <text class="content-text">查查助手是一款轻量化信息查询与确认工具，支持用户上传表格生成专属查询页面，设置私密查询条件，实现"一人一查"的隐私保护。适用于成绩查询、信息核对、录取通知、报名查询等多种场景。</text>
+    </view>
+  </view>
+
+  <view class="about-section">
+    <view class="section-title">核心功能</view>
+    <view class="feature-list">
+      <view class="feature-item">
+        <view class="feature-icon">
+          <image class="icon-svg" src="/assets/icons/stats.svg" mode="aspectFit"></image>
+        </view>
+        <text class="feature-text">Excel表格一键上传解析</text>
+      </view>
+      <view class="feature-item">
+        <view class="feature-icon">
+          <image class="icon-svg" src="/assets/icons/lock.svg" mode="aspectFit"></image>
+        </view>
+        <text class="feature-text">私密查询条件保护隐私</text>
+      </view>
+      <view class="feature-item">
+        <view class="feature-icon">
+          <image class="icon-svg" src="/assets/icons/sign.svg" mode="aspectFit"></image>
+        </view>
+        <text class="feature-text">签收确认功能</text>
+      </view>
+      <view class="feature-item">
+        <view class="feature-icon">
+          <image class="icon-svg" src="/assets/icons/export.svg" mode="aspectFit"></image>
+        </view>
+        <text class="feature-text">数据导出与统计</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="about-links">
+    <view class="link-item" bindtap="goToAgreement">
+      <text class="link-text">用户协议</text>
+      <text class="link-arrow">›</text>
+    </view>
+    <view class="link-item" bindtap="goToPrivacy">
+      <text class="link-text">隐私政策</text>
+      <text class="link-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="about-footer">
+    <text class="copyright">© 2024 查查助手 版权所有</text>
+  </view>
+</view>

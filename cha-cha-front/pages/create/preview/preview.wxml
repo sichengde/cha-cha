@@ -1,0 +1,80 @@
+<view class="preview-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="goBack">
+        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">预览表格</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="header-tip">
+      <text class="tip-text">表头若有误，您可</text>
+      <text class="tip-link" bindtap="reselectHeader">重新选择表头行</text>
+    </view>
+
+    <scroll-view class="table-scroll" scroll-x scroll-y>
+      <view class="table">
+        <view class="table-row header">
+          <view class="table-cell" wx:for="{{headers}}" wx:key="index" bindtap="editHeader" data-index="{{index}}">
+            <text>{{item}}</text>
+            <image class="edit-icon" src="/assets/icons/edit.svg" mode="aspectFit"></image>
+          </view>
+        </view>
+        <view class="table-row" wx:for="{{rows}}" wx:key="index">
+          <view class="table-cell" wx:for="{{item}}" wx:for-item="cell" wx:for-index="cellIndex" wx:key="cellIndex">
+            <text>{{cell}}</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="bottom-buttons">
+      <button class="btn-secondary" bindtap="reUpload">重新上传</button>
+      <button class="btn-primary" bindtap="goToCondition">下一步</button>
+    </view>
+  </view>
+
+  <view class="edit-modal" wx:if="{{showEditModal}}">
+    <view class="modal-mask" bindtap="closeEditModal"></view>
+    <view class="modal-content">
+      <view class="modal-title">编辑表头</view>
+      <input class="modal-input" value="{{editHeaderValue}}" bindinput="onEditInput" placeholder="请输入表头名称" />
+      <view class="modal-buttons">
+        <button class="modal-btn cancel" bindtap="closeEditModal">取消</button>
+        <button class="modal-btn confirm" bindtap="confirmEdit">确定</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="action-modal" wx:if="{{showActionSheet}}">
+    <view class="modal-mask" bindtap="closeActionSheet"></view>
+    <view class="action-sheet">
+      <view class="action-item" bindtap="editHeaderAction">编辑表头</view>
+      <view class="action-item delete" bindtap="deleteColumnDirect">删除此列</view>
+      <view class="action-item cancel" bindtap="closeActionSheet">取消</view>
+    </view>
+  </view>
+
+  <view class="header-select-modal" wx:if="{{showHeaderSelect}}">
+    <view class="modal-mask" bindtap="closeHeaderSelect"></view>
+    <view class="modal-content">
+      <view class="modal-title">选择表头行</view>
+      <scroll-view class="row-list" scroll-y>
+        <view class="row-item {{selectedHeaderRow === index ? 'selected' : ''}}" 
+              wx:for="{{allRows}}" wx:key="index" 
+              bindtap="selectHeaderRow" data-index="{{index}}">
+          <text class="row-label">第{{index + 1}}行</text>
+          <text class="row-content">{{item}}</text>
+          <image class="check-icon" src="/assets/icons/check.svg" mode="aspectFit" wx:if="{{selectedHeaderRow === index}}"></image>
+        </view>
+      </scroll-view>
+      <view class="modal-buttons">
+        <button class="modal-btn cancel" bindtap="closeHeaderSelect">取消</button>
+        <button class="modal-btn confirm" bindtap="confirmHeaderSelect">确定</button>
+      </view>
+    </view>
+  </view>
+</view>

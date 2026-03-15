@@ -1,0 +1,30 @@
+<view class="usercenter-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left"></view>
+      <view class="navbar-title">我的</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="menu-section">
+      <view class="menu-group">
+        <view class="menu-item">
+          <view class="menu-icon">
+            <image src="/assets/icons/share.svg" class="menu-icon-img"></image>
+          </view>
+          <view class="menu-text">推荐给好友</view>
+          <view class="menu-arrow">›</view>
+        </view>
+        <view class="menu-item" bindtap="goToAbout">
+          <view class="menu-icon">
+            <image src="/assets/icons/about.svg" class="menu-icon-img"></image>
+          </view>
+          <view class="menu-text">关于查查</view>
+          <view class="menu-arrow">›</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

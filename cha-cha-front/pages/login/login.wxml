@@ -1,0 +1,52 @@
+<view class="login-container">
+  <view class="login-header">
+    <image class="logo" src="/assets/images/logo.svg" mode="aspectFit"></image>
+    <text class="app-name">查查助手</text>
+    <text class="app-desc">轻量化信息查询与确认工具</text>
+  </view>
+
+  <view class="login-content">
+    <view class="feature-list">
+      <view class="feature-item">
+        <view class="feature-icon">
+          <image class="icon-svg" src="/assets/icons/upload.svg" mode="aspectFit"></image>
+        </view>
+        <view class="feature-text">
+          <text class="feature-title">上传表格</text>
+          <text class="feature-desc">支持Excel表格一键上传</text>
+        </view>
+      </view>
+      <view class="feature-item">
+        <view class="feature-icon">
+          <image class="icon-svg" src="/assets/icons/search.svg" mode="aspectFit"></image>
+        </view>
+        <view class="feature-text">
+          <text class="feature-title">创建查询</text>
+          <text class="feature-desc">设置私密查询条件</text>
+        </view>
+      </view>
+      <view class="feature-item">
+        <view class="feature-icon">
+          <image class="icon-svg" src="/assets/icons/share.svg" mode="aspectFit"></image>
+        </view>
+        <view class="feature-text">
+          <text class="feature-title">分享查询</text>
+          <text class="feature-desc">一键分享给需要的人</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="login-footer">
+    <view class="loading-area" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">正在登录...</text>
+    </view>
+    <view class="agreement-tip">
+      <text>使用即表示同意</text>
+      <text class="link" bindtap="goToAgreement">《用户协议》</text>
+      <text>和</text>
+      <text class="link" bindtap="goToPrivacy">《隐私政策》</text>
+    </view>
+  </view>
+</view>

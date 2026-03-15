@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生成绿色图标</title>
+</head>
+<body>
+    <h1>生成绿色 TabBar 图标</h1>
+    
+    <canvas id="canvas1" width="81" height="81" style="border:1px solid #ccc; margin:10px;"></canvas>
+    <button onclick="downloadIcon('canvas1', 'home-active.png')">下载首页激活图标</button><br><br>
+    
+    <canvas id="canvas2" width="81" height="81" style="border:1px solid #ccc; margin:10px;"></canvas>
+    <button onclick="downloadIcon('canvas2', 'query-active.png')">下载查询激活图标</button><br><br>
+    
+    <canvas id="canvas3" width="81" height="81" style="border:1px solid #ccc; margin:10px;"></canvas>
+    <button onclick="downloadIcon('canvas3', 'user-active.png')">下载我的激活图标</button><br><br>
+    
+    <script>
+        const greenColor = '#07c160';
+        
+        function drawHomeIcon(ctx) {
+            ctx.clearRect(0, 0, 81, 81);
+            ctx.fillStyle = greenColor;
+            ctx.strokeStyle = greenColor;
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            ctx.moveTo(40.5, 15);
+            ctx.lineTo(65, 35);
+            ctx.lineTo(65, 66);
+            ctx.lineTo(16, 66);
+            ctx.lineTo(16, 35);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        function drawQueryIcon(ctx) {
+            ctx.clearRect(0, 0, 81, 81);
+            ctx.fillStyle = greenColor;
+            ctx.strokeStyle = greenColor;
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            ctx.arc(40.5, 35.5, 20, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(54.5, 45.5);
+            ctx.lineTo(65.5, 56.5);
+            ctx.stroke();
+        }
+        
+        function drawUserIcon(ctx) {
+            ctx.clearRect(0, 0, 81, 81);
+            ctx.fillStyle = greenColor;
+            ctx.strokeStyle = greenColor;
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            ctx.arc(40.5, 28, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(40.5, 75, 30, Math.PI, 0, true);
+            ctx.fill();
+        }
+        
+        function downloadIcon(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        window.onload = function() {
+            drawHomeIcon(document.getElementById('canvas1').getContext('2d'));
+            drawQueryIcon(document.getElementById('canvas2').getContext('2d'));
+            drawUserIcon(document.getElementById('canvas3').getContext('2d'));
+        };
+    </script>
+</body>
+</html>

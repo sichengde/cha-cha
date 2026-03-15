@@ -1,0 +1,23 @@
+<view class="success-modal">
+  <view class="modal-content">
+    <view class="success-icon">
+      <image class="check-icon" src="/assets/icons/check.svg" mode="aspectFit"></image>
+    </view>
+    
+    <view class="success-title">创建成功</view>
+    <view class="success-desc">转发分享给大家查询吧 ~ 如需修改可点「管理-编辑」</view>
+
+    <view class="share-section">
+      <view class="share-options">
+        <view class="share-option" open-type="share">
+          <image class="share-icon" src="/assets/icons/wechat.svg" mode="aspectFit"></image>
+          <text class="share-label">转发到微信</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="close-btn" bindtap="closeModal">
+      <image class="close-icon" src="/assets/icons/close.svg" mode="aspectFit"></image>
+    </view>
+  </view>
+</view>

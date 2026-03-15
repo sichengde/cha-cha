@@ -1,0 +1,37 @@
+<view class="condition-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="goBack">
+        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">设置查询条件</view>
+      <view class="navbar-right">
+        <text class="help-link">有疑问？</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="tip-section">
+      <text class="tip-text">以下是我们解析的表头，若有误，您可</text>
+      <text class="tip-link" bindtap="reselectHeader">重新选择表头行</text>
+    </view>
+
+    <view class="example-tip">
+      <text class="example-text">例如想通过「姓名」查询，就勾选「姓名」，可多选</text>
+    </view>
+
+    <view class="condition-list">
+      <view class="condition-item" wx:for="{{headers}}" wx:key="index" bindtap="toggleCondition" data-index="{{index}}">
+        <view class="checkbox {{item.selected ? 'checked' : ''}}">
+          <image class="check-icon" src="/assets/icons/check.svg" mode="aspectFit" wx:if="{{item.selected}}"></image>
+        </view>
+        <text class="condition-text">{{item.name}}</text>
+      </view>
+    </view>
+
+    <view class="bottom-button">
+      <button class="btn-primary" bindtap="goToSettings">下一步</button>
+    </view>
+  </view>
+</view>

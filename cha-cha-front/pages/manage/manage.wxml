@@ -1,0 +1,127 @@
+<view class="manage-container">
+  <view class="header-card">
+    <view class="header-info">
+      <text class="query-name">{{queryInfo.name}}</text>
+      <text class="query-desc">{{queryInfo.description || '暂无描述'}}</text>
+    </view>
+    <view class="header-actions">
+      <button class="btn-share" bindtap="shareQuery">分享查询</button>
+    </view>
+  </view>
+
+  <view class="stats-card">
+    <view class="stats-title">数据统计</view>
+    <view class="stats-grid">
+      <view class="stat-box">
+        <text class="stat-num">{{stats.total}}</text>
+        <text class="stat-label">总人数</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-num primary">{{stats.queried}}</text>
+        <text class="stat-label">已查询</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-num warning">{{stats.unqueried}}</text>
+        <text class="stat-label">未查询</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-num success">{{stats.signed}}</text>
+        <text class="stat-label">已签收</text>
+      </view>
+    </view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{stats.queryRate}}%"></view>
+    </view>
+    <text class="progress-text">查询进度 {{stats.queryRate}}%</text>
+  </view>
+
+  <view class="action-card">
+    <view class="action-item" bindtap="goToStats">
+      <view class="action-icon stats">
+        <image class="icon-svg" src="/assets/icons/stats.svg" mode="aspectFit"></image>
+      </view>
+      <view class="action-text">
+        <text class="action-title">详细统计</text>
+        <text class="action-desc">查看查询详情和签收情况</text>
+      </view>
+      <text class="action-arrow">›</text>
+    </view>
+    <view class="action-item" bindtap="exportData">
+      <view class="action-icon export">
+        <image class="icon-svg" src="/assets/icons/export.svg" mode="aspectFit"></image>
+      </view>
+      <view class="action-text">
+        <text class="action-title">导出数据</text>
+        <text class="action-desc">导出Excel表格，包含查询状态</text>
+      </view>
+      <text class="action-arrow">›</text>
+    </view>
+    <view class="action-item" bindtap="exportSignatures">
+      <view class="action-icon signature">
+        <image class="icon-svg" src="/assets/icons/sign.svg" mode="aspectFit"></image>
+      </view>
+      <view class="action-text">
+        <text class="action-title">导出签名</text>
+        <text class="action-desc">导出签收记录和签名图片</text>
+      </view>
+      <text class="action-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="data-card">
+    <view class="card-header">
+      <text class="card-title">数据列表</text>
+      <view class="filter-btn" bindtap="showFilter">
+        <text class="filter-text">{{filterText}}</text>
+        <text class="filter-arrow">▼</text>
+      </view>
+    </view>
+    <scroll-view class="data-table" scroll-x scroll-y>
+      <view class="table-row header">
+        <view class="table-cell" wx:for="{{tableHeaders}}" wx:key="index">{{item}}</view>
+        <view class="table-cell">状态</view>
+        <view class="table-cell">签收</view>
+      </view>
+      <view class="table-row" wx:for="{{filteredRows}}" wx:key="index">
+        <view class="table-cell" wx:for="{{item.data}}" wx:key="index">{{item}}</view>
+        <view class="table-cell">
+          <text class="status-tag {{item.queried ? 'queried' : 'unqueried'}}">{{item.queried ? '已查' : '未查'}}</text>
+        </view>
+        <view class="table-cell">
+          <text class="status-tag {{item.signed ? 'signed' : 'unsigned'}}">{{item.signed ? '已签' : '未签'}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="settings-card">
+    <view class="card-title">查询设置</view>
+    <view class="setting-item">
+      <text class="setting-label">查询状态</text>
+      <switch checked="{{queryInfo.status === 'active'}}" bindchange="toggleStatus" color="#4A90D9" />
+    </view>
+    <view class="setting-item" bindtap="editQuery">
+      <text class="setting-label">编辑查询</text>
+      <text class="setting-arrow">›</text>
+    </view>
+    <view class="setting-item" bindtap="deleteQuery">
+      <text class="setting-label danger">删除查询</text>
+      <text class="setting-arrow">›</text>
+    </view>
+  </view>
+</view>
+
+<view class="share-modal" wx:if="{{showShareModal}}" bindtap="hideShareModal">
+  <view class="share-content" catchtap="">
+    <view class="share-title">分享查询</view>
+    <view class="qrcode-box">
+      <image class="qrcode" src="/assets/images/mock-qrcode.svg" mode="aspectFit"></image>
+    </view>
+    <text class="share-tip">长按保存二维码，或点击下方按钮分享</text>
+    <view class="share-actions">
+      <button class="share-btn" open-type="share">转发给好友</button>
+      <button class="share-btn" bindtap="copyLink">复制链接</button>
+    </view>
+    <button class="btn-close" bindtap="hideShareModal">关闭</button>
+  </view>
+</view>

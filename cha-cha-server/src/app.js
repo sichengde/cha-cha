@@ -1,0 +1,99 @@
+require('dotenv').config()
+const express = require('express')
+const cors = require('cors')
+const helmet = require('helmet')
+const rateLimit = require('express-rate-limit')
+const path = require('path')
+
+const userRoutes = require('./routes/userRoutes')
+const queryRoutes = require('./routes/queryRoutes')
+const dataRoutes = require('./routes/dataRoutes')
+const fileRoutes = require('./routes/fileRoutes')
+const statsRoutes = require('./routes/statsRoutes')
+
+const { testConnection } = require('./config/database')
+
+const app = express()
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}))
+
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Openid']
+}))
+
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  message: { success: false, message: '请求过于频繁，请稍后再试' }
+})
+app.use('/api/', limiter)
+
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+
+app.get('/', function(req, res) {
+  res.json({
+    success: true,
+    message: '查查助手 API 服务',
+    version: '1.0.0',
+    endpoints: {
+      users: '/api/users',
+      queries: '/api/queries',
+      data: '/api/data',
+      files: '/api/files',
+      stats: '/api/stats'
+    }
+  })
+})
+
+app.use('/api/users', userRoutes)
+app.use('/api/queries', queryRoutes)
+app.use('/api/data', dataRoutes)
+app.use('/api/files', fileRoutes)
+app.use('/api/stats', statsRoutes)
+
+app.use(function(err, req, res, next) {
+  console.error('Error:', err)
+  
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ success: false, message: 'JSON格式错误' })
+  }
+
+  if (err.message === '只支持Excel文件') {
+    return res.status(400).json({ success: false, message: err.message })
+  }
+
+  res.status(500).json({ success: false, message: '服务器内部错误' })
+})
+
+app.use(function(req, res) {
+  res.status(404).json({ success: false, message: '接口不存在' })
+})
+
+const PORT = process.env.PORT || 3000
+
+async function startServer() {
+  try {
+    const dbConnected = await testConnection()
+    if (!dbConnected) {
+      console.error('数据库连接失败，请检查配置')
+      process.exit(1)
+    }
+
+    app.listen(PORT, '0.0.0.0', function() {
+      console.log('服务器运行在端口 ' + PORT)
+      console.log('访问 http://localhost:' + PORT + ' 查看API文档')
+    })
+  } catch (error) {
+    console.error('启动服务器失败:', error)
+    process.exit(1)
+  }
+}
+
+startServer()

@@ -1,0 +1,57 @@
+<view class="myqueries-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left"></view>
+      <view class="navbar-title">查询</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
+  <view class="search-bar">
+    <input class="search-input" placeholder="搜索查询名称" value="{{searchText}}" bindinput="onSearch" />
+  </view>
+
+  <view class="filter-tabs">
+    <view class="tab-item {{currentTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-tab="all">全部</view>
+    <view class="tab-item {{currentTab === 'active' ? 'active' : ''}}" bindtap="switchTab" data-tab="active">进行中</view>
+    <view class="tab-item {{currentTab === 'ended' ? 'active' : ''}}" bindtap="switchTab" data-tab="ended">已结束</view>
+  </view>
+
+  <view class="query-list" wx:if="{{filteredQueries.length > 0}}">
+    <view class="query-card" wx:for="{{filteredQueries}}" wx:key="id" bindtap="goToManage" data-id="{{item.id}}">
+      <view class="card-header">
+        <text class="query-name">{{item.name}}</text>
+        <text class="query-status {{item.statusClass}}">{{item.statusText}}</text>
+      </view>
+      <view class="card-body">
+        <view class="stat-row">
+          <view class="stat-item">
+            <text class="stat-value">{{item.queryCount}}</text>
+            <text class="stat-label">已查人数</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{item.totalCount - item.queryCount}}</text>
+            <text class="stat-label">未查人数</text>
+          </view>
+          <view class="stat-item">
+            <text class="stat-value">{{item.signedCount || 0}}</text>
+            <text class="stat-label">已签收</text>
+          </view>
+        </view>
+      </view>
+      <view class="card-footer">
+        <text class="create-time">创建于 {{item.createTime}}</text>
+        <view class="actions">
+          <text class="action-btn" catchtap="shareQuery" data-id="{{item.id}}">分享</text>
+          <text class="action-btn" catchtap="editQuery" data-id="{{item.id}}">编辑</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <image class="empty-icon" src="/assets/images/empty.svg" mode="aspectFit"></image>
+    <text class="empty-text">暂无查询记录</text>
+    <text class="empty-tip">请在首页点击"创建查询"添加</text>
+  </view>
+</view>

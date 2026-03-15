@@ -1,0 +1,71 @@
+<view class="stats-container">
+  <view class="overview-card">
+    <view class="overview-title">查询概览</view>
+    <view class="overview-stats">
+      <view class="stat-item">
+        <text class="stat-value">{{stats.total}}</text>
+        <text class="stat-label">总人数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value primary">{{stats.queried}}</text>
+        <text class="stat-label">已查询</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value warning">{{stats.unqueried}}</text>
+        <text class="stat-label">未查询</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value success">{{stats.signed}}</text>
+        <text class="stat-label">已签收</text>
+      </view>
+    </view>
+    <view class="progress-section">
+      <view class="progress-label">
+        <text>查询进度</text>
+        <text class="progress-percent">{{stats.queryRate}}%</text>
+      </view>
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{stats.queryRate}}%"></view>
+      </view>
+    </view>
+    <view class="progress-section" wx:if="{{queryInfo.settings.enableSign}}">
+      <view class="progress-label">
+        <text>签收进度</text>
+        <text class="progress-percent">{{stats.signRate}}%</text>
+      </view>
+      <view class="progress-bar sign">
+        <view class="progress-fill" style="width: {{stats.signRate}}%"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="detail-section">
+    <view class="section-header">
+      <text class="section-title">查询详情</text>
+      <view class="filter-tabs">
+        <view class="tab {{currentTab === 'all' ? 'active' : ''}}" bindtap="switchTab" data-tab="all">全部</view>
+        <view class="tab {{currentTab === 'queried' ? 'active' : ''}}" bindtap="switchTab" data-tab="queried">已查</view>
+        <view class="tab {{currentTab === 'unqueried' ? 'active' : ''}}" bindtap="switchTab" data-tab="unqueried">未查</view>
+      </view>
+    </view>
+
+    <view class="detail-list">
+      <view class="detail-item" wx:for="{{filteredDetails}}" wx:key="index">
+        <view class="item-main">
+          <view class="item-info">
+            <text class="item-name">{{item.name}}</text>
+            <text class="item-id">{{item.id}}</text>
+          </view>
+          <view class="item-status">
+            <text class="status-tag {{item.queried ? 'queried' : 'unqueried'}}">{{item.queried ? '已查询' : '未查询'}}</text>
+            <text class="status-tag {{item.signed ? 'signed' : ''}}" wx:if="{{queryInfo.settings.enableSign}}">{{item.signed ? '已签收' : '未签收'}}</text>
+          </view>
+        </view>
+        <view class="item-extra" wx:if="{{item.queried}}">
+          <text class="extra-text">查询时间: {{item.queryTime || '-'}}</text>
+          <text class="extra-text" wx:if="{{item.modified}}">有修改</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

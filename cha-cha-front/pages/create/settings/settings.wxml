@@ -1,0 +1,106 @@
+<view class="settings-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="goBack">
+        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">创建查询</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
+  <scroll-view class="content" scroll-y>
+    <view class="name-card">
+      <view class="name-input-row">
+        <text class="name-label">查询名称</text>
+        <input class="name-input" value="{{name}}" bindinput="onNameInput" placeholder="请输入查询名称" />
+      </view>
+      <textarea class="desc-input" value="{{description}}" bindinput="onDescInput" placeholder="添加查询描述（选填）" />
+    </view>
+
+    <view class="setting-item" bindtap="goToCondition">
+      <text class="setting-label">查询条件</text>
+      <view class="setting-right">
+        <text class="setting-value">{{conditionText}}</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
+    <view class="section-title">高级设置</view>
+
+    <view class="setting-item">
+      <text class="setting-label">允许修改信息</text>
+      <view class="setting-right">
+        <text class="setting-value">{{allowModify ? '开启' : '关闭'}}</text>
+        <switch checked="{{allowModify}}" bindchange="toggleAllowModify" color="#07c160" />
+      </view>
+    </view>
+
+    <view class="setting-item">
+      <text class="setting-label">确认签收</text>
+      <view class="setting-right">
+        <text class="setting-value">{{enableSign ? '开启' : '关闭'}}</text>
+        <switch checked="{{enableSign}}" bindchange="toggleEnableSign" color="#07c160" />
+      </view>
+    </view>
+
+    <view class="setting-item" bindtap="showTimeLimitModal">
+      <text class="setting-label">限制查询时间</text>
+      <view class="setting-right">
+        <text class="setting-value">{{timeLimitText}}</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
+    <view class="setting-item">
+      <text class="setting-label">查询时需授权昵称</text>
+      <view class="setting-right">
+        <text class="setting-value">{{requireNickname ? '开启' : '关闭'}}</text>
+        <switch checked="{{requireNickname}}" bindchange="toggleRequireNickname" color="#07c160" />
+      </view>
+    </view>
+
+    <view class="bottom-space"></view>
+  </scroll-view>
+
+  <view class="bottom-bar">
+    <button class="btn-save" bindtap="saveAndShare">保存，并去转发</button>
+  </view>
+
+  <view class="time-modal" wx:if="{{showTimeModal}}">
+    <view class="modal-mask" bindtap="hideTimeLimitModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">限制查询时间</text>
+        <image class="close-icon" src="/assets/icons/close.svg" mode="aspectFit" bindtap="hideTimeLimitModal"></image>
+      </view>
+      
+      <view class="modal-body">
+        <view class="time-row">
+          <text class="time-label">开始时间</text>
+          <picker mode="multiSelector" range="{{dateTimeArray}}" value="{{startTimeValue}}" bindchange="onStartTimeChange" bindcolumnchange="onStartTimeColumnChange">
+            <view class="time-picker">
+              <text class="time-value">{{startTimeText || '请选择'}}</text>
+              <text class="arrow">›</text>
+            </view>
+          </picker>
+        </view>
+        
+        <view class="time-row">
+          <text class="time-label">结束时间</text>
+          <picker mode="multiSelector" range="{{dateTimeArray}}" value="{{endTimeValue}}" bindchange="onEndTimeChange" bindcolumnchange="onEndTimeColumnChange">
+            <view class="time-picker">
+              <text class="time-value">{{endTimeText || '请选择'}}</text>
+              <text class="arrow">›</text>
+            </view>
+          </picker>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="btn-reset" bindtap="resetTimeLimit">不限制</button>
+        <button class="btn-confirm" bindtap="confirmTimeLimit">确定</button>
+      </view>
+    </view>
+  </view>
+</view>
