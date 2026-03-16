@@ -1,4 +1,19 @@
 Page({
+  data: {
+    statusBarHeight: 44
+  },
+
+  onLoad: function() {
+    var systemInfo = wx.getSystemInfoSync()
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight || 44
+    })
+  },
+
+  goBack: function() {
+    wx.navigateBack()
+  },
+
   goToAgreement: function() {
     wx.showModal({
       title: '用户协议',

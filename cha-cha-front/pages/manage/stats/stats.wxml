@@ -1,4 +1,14 @@
 <view class="stats-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="goBack">
+        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">详细统计</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
   <view class="overview-card">
     <view class="overview-title">查询概览</view>
     <view class="overview-stats">

@@ -1,11 +1,18 @@
 <view class="manage-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="goBack">
+        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">查询管理</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
   <view class="header-card">
     <view class="header-info">
       <text class="query-name">{{queryInfo.name}}</text>
       <text class="query-desc">{{queryInfo.description || '暂无描述'}}</text>
-    </view>
-    <view class="header-actions">
-      <button class="btn-share" bindtap="shareQuery">分享查询</button>
     </view>
   </view>
 
@@ -76,7 +83,7 @@
         <text class="filter-arrow">▼</text>
       </view>
     </view>
-    <scroll-view class="data-table" scroll-x scroll-y>
+    <scroll-view class="data-table" scroll-x scroll-y bindscrolltolower="loadMore">
       <view class="table-row header">
         <view class="table-cell" wx:for="{{tableHeaders}}" wx:key="index">{{item}}</view>
         <view class="table-cell">状态</view>
@@ -91,6 +98,12 @@
           <text class="status-tag {{item.signed ? 'signed' : 'unsigned'}}">{{item.signed ? '已签' : '未签'}}</text>
         </view>
       </view>
+      <view class="load-more" wx:if="{{hasMore}}">
+        <text>{{loading ? '加载中...' : '上拉加载更多'}}</text>
+      </view>
+      <view class="load-more" wx:if="{{!hasMore && filteredRows.length > 0}}">
+        <text>没有更多了</text>
+      </view>
     </scroll-view>
   </view>
 
@@ -98,7 +111,7 @@
     <view class="card-title">查询设置</view>
     <view class="setting-item">
       <text class="setting-label">查询状态</text>
-      <switch checked="{{queryInfo.status === 'active'}}" bindchange="toggleStatus" color="#4A90D9" />
+      <switch checked="{{queryInfo.status === 'active'}}" bindchange="toggleStatus" color="#07c160" />
     </view>
     <view class="setting-item" bindtap="editQuery">
       <text class="setting-label">编辑查询</text>
@@ -109,19 +122,10 @@
       <text class="setting-arrow">›</text>
     </view>
   </view>
-</view>
 
-<view class="share-modal" wx:if="{{showShareModal}}" bindtap="hideShareModal">
-  <view class="share-content" catchtap="">
-    <view class="share-title">分享查询</view>
-    <view class="qrcode-box">
-      <image class="qrcode" src="/assets/images/mock-qrcode.svg" mode="aspectFit"></image>
-    </view>
-    <text class="share-tip">长按保存二维码，或点击下方按钮分享</text>
-    <view class="share-actions">
-      <button class="share-btn" open-type="share">转发给好友</button>
-      <button class="share-btn" bindtap="copyLink">复制链接</button>
-    </view>
-    <button class="btn-close" bindtap="hideShareModal">关闭</button>
+  <view class="bottom-space"></view>
+
+  <view class="bottom-bar">
+    <button class="btn-share" open-type="share">分享查询</button>
   </view>
 </view>

@@ -327,47 +327,8 @@ const exportSignatures = async (req, res) => {
   }
 }
 
-const getExportRecords = async (req, res) => {
-  try {
-    const userId = req.user.id
-    const { page = 1, pageSize = 10 } = req.query
-
-    const records = await query(
-      `SELECT er.*, qp.name as query_name 
-       FROM export_records er 
-       LEFT JOIN query_pages qp ON er.query_page_id = qp.id 
-       WHERE er.user_id = ? 
-       ORDER BY er.created_at DESC 
-       LIMIT ? OFFSET ?`,
-      [userId, parseInt(pageSize), (parseInt(page) - 1) * parseInt(pageSize)]
-    )
-
-    const totalResult = await queryOne(
-      'SELECT COUNT(*) as total FROM export_records WHERE user_id = ?',
-      [userId]
-    )
-
-    res.json({
-      success: true,
-      data: {
-        list: records,
-        total: totalResult.total,
-        page: parseInt(page),
-        pageSize: parseInt(pageSize)
-      }
-    })
-  } catch (error) {
-    console.error('获取导出记录失败:', error)
-    res.status(500).json({
-      success: false,
-      message: '获取导出记录失败'
-    })
-  }
-}
-
 module.exports = {
   uploadExcel,
   exportData,
-  exportSignatures,
-  getExportRecords
+  exportSignatures
 }

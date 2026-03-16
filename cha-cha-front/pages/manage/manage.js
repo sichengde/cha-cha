@@ -6,6 +6,7 @@ var fileApi = api.fileApi
 
 Page({
   data: {
+    statusBarHeight: 44,
     queryId: '',
     queryInfo: {
       name: '',
@@ -24,15 +25,27 @@ Page({
     filteredRows: [],
     filterText: '全部',
     currentFilter: 'all',
-    showShareModal: false,
-    loading: false
+    loading: false,
+    page: 1,
+    pageSize: 50,
+    hasMore: true,
+    total: 0
   },
 
   onLoad: function(options) {
+    var systemInfo = wx.getSystemInfoSync()
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight || 44
+    })
+
     if (options.id) {
       this.setData({ queryId: options.id })
       this.loadQueryInfo(options.id)
     }
+  },
+
+  goBack: function() {
+    wx.navigateBack()
   },
 
   loadQueryInfo: function(queryId) {
@@ -76,55 +89,64 @@ Page({
     })
   },
 
-  loadFilteredRows: function() {
+  loadFilteredRows: function(loadMore) {
     var that = this
     var queryId = this.data.queryId
     var currentFilter = this.data.currentFilter
+    var page = loadMore ? this.data.page + 1 : 1
+    var pageSize = this.data.pageSize
+    
+    if (this.data.loading) return
+    if (loadMore && !this.data.hasMore) return
+    
+    this.setData({ loading: true })
     
     var apiCall
     switch (currentFilter) {
+      case 'all':
+      case 'queried':
+        apiCall = statsApi.getAll(queryId, { page: page, pageSize: pageSize })
+        break
       case 'unqueried':
-        apiCall = statsApi.getUnqueried(queryId, { page: 1, pageSize: 100 })
+        apiCall = statsApi.getUnqueried(queryId, { page: page, pageSize: pageSize })
         break
       case 'unsigned':
-        apiCall = statsApi.getUnsigned(queryId, { page: 1, pageSize: 100 })
+        apiCall = statsApi.getUnsigned(queryId, { page: page, pageSize: pageSize })
         break
       default:
-        this.setData({ filteredRows: [] })
+        this.setData({ filteredRows: [], loading: false })
         return
     }
 
     apiCall.then(function(data) {
       if (data.success) {
-        that.setData({
-          filteredRows: data.data.list.map(function(row) {
-            return {
-              data: Object.values(row),
-              queried: currentFilter !== 'unqueried',
-              signed: currentFilter === 'unsigned' ? false : true
-            }
-          })
+        var newRows = data.data.list.map(function(row) {
+          return {
+            data: Object.values(row),
+            queried: row._queried,
+            signed: row._signed
+          }
         })
+        
+        var allRows = loadMore ? that.data.filteredRows.concat(newRows) : newRows
+        
+        that.setData({
+          filteredRows: allRows,
+          page: page,
+          total: data.data.total,
+          hasMore: allRows.length < data.data.total,
+          loading: false
+        })
+      } else {
+        that.setData({ loading: false })
       }
+    }).catch(function() {
+      that.setData({ loading: false })
     })
   },
 
-  shareQuery: function() {
-    this.setData({ showShareModal: true })
-  },
-
-  hideShareModal: function() {
-    this.setData({ showShareModal: false })
-  },
-
-  copyLink: function() {
-    var link = 'pages/query/query?id=' + this.data.queryId
-    wx.setClipboardData({
-      data: link,
-      success: function() {
-        wx.showToast({ title: '链接已复制', icon: 'success' })
-      }
-    })
+  loadMore: function() {
+    this.loadFilteredRows(true)
   },
 
   goToStats: function() {
@@ -175,7 +197,9 @@ Page({
         var texts = ['全部', '已查询', '未查询', '已签收', '未签收']
         that.setData({
           currentFilter: filters[res.tapIndex],
-          filterText: texts[res.tapIndex]
+          filterText: texts[res.tapIndex],
+          page: 1,
+          hasMore: true
         })
         that.loadFilteredRows()
       }

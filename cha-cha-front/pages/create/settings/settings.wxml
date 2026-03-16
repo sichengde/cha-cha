@@ -103,4 +103,19 @@
       </view>
     </view>
   </view>
+
+  <view class="share-modal" wx:if="{{showShareModal}}">
+    <view class="modal-mask"></view>
+    <view class="modal-content">
+      <view class="success-icon">
+        <image class="check-icon" src="/assets/icons/check.svg" mode="aspectFit"></image>
+      </view>
+      <view class="success-title">创建成功</view>
+      <view class="success-desc">转发分享给大家查询吧</view>
+      <view class="share-btns">
+        <button class="btn-share" open-type="share">转发到微信</button>
+        <button class="btn-done" bindtap="hideShareModal">完成</button>
+      </view>
+    </view>
+  </view>
 </view>

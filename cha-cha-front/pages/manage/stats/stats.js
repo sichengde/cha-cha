@@ -4,6 +4,7 @@ var statsApi = api.statsApi
 
 Page({
   data: {
+    statusBarHeight: 44,
     queryId: '',
     queryInfo: {},
     stats: {
@@ -20,10 +21,19 @@ Page({
   },
 
   onLoad: function(options) {
+    var systemInfo = wx.getSystemInfoSync()
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight || 44
+    })
+
     if (options.id) {
       this.setData({ queryId: options.id })
       this.loadStats(options.id)
     }
+  },
+
+  goBack: function() {
+    wx.navigateBack()
   },
 
   loadStats: function(queryId) {

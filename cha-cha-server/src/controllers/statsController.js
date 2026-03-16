@@ -110,6 +110,74 @@ const getStatistics = async (req, res) => {
   }
 }
 
+const getAllDataList = async (req, res) => {
+  try {
+    const { id } = req.params
+    const userId = req.user.id
+    const { page = 1, pageSize = 20 } = req.query
+
+    const queryPage = await queryOne(
+      'SELECT * FROM query_pages WHERE id = ? AND user_id = ?',
+      [id, userId]
+    )
+
+    if (!queryPage) {
+      return res.status(404).json({
+        success: false,
+        message: '查询页面不存在或无权限'
+      })
+    }
+
+    const headers = await query(
+      'SELECT * FROM query_headers WHERE query_page_id = ? ORDER BY column_index',
+      [id]
+    )
+
+    const allData = await query(
+      `SELECT qd.*, 
+              (SELECT COUNT(*) FROM query_records qr WHERE qr.query_data_id = qd.id) as query_count,
+              (SELECT COUNT(*) FROM signatures s WHERE s.query_data_id = qd.id) as sign_count
+       FROM query_data qd 
+       WHERE qd.query_page_id = ?
+       ORDER BY qd.row_index 
+       LIMIT ? OFFSET ?`,
+      [id, parseInt(pageSize), (parseInt(page) - 1) * parseInt(pageSize)]
+    )
+
+    const totalResult = await queryOne(
+      'SELECT COUNT(*) as total FROM query_data WHERE query_page_id = ?',
+      [id]
+    )
+
+    const formattedData = allData.map(row => {
+      const data = JSON.parse(row.data)
+      const result = {}
+      headers.forEach(h => {
+        result[h.column_name] = data[h.column_index]
+      })
+      result._queried = row.query_count > 0
+      result._signed = row.sign_count > 0
+      return result
+    })
+
+    res.json({
+      success: true,
+      data: {
+        list: formattedData,
+        total: totalResult.total,
+        page: parseInt(page),
+        pageSize: parseInt(pageSize)
+      }
+    })
+  } catch (error) {
+    console.error('获取全部数据列表失败:', error)
+    res.status(500).json({
+      success: false,
+      message: '获取数据列表失败'
+    })
+  }
+}
+
 const getUnqueriedList = async (req, res) => {
   try {
     const { id } = req.params
@@ -248,6 +316,7 @@ const getUnsignedList = async (req, res) => {
 
 module.exports = {
   getStatistics,
+  getAllDataList,
   getUnqueriedList,
   getUnsignedList
 }

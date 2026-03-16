@@ -119,45 +119,28 @@
   background: #fff;
   border-radius: 16rpx;
   padding: 24rpx;
+  display: flex;
+  align-items: center;
+}
+
+.query-info {
+  flex: 1;
 }
 
 .query-title {
   font-size: 30rpx;
   font-weight: 600;
   color: #333;
-  margin-bottom: 16rpx;
-}
-
-.query-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  margin-bottom: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 
 .query-time {
   font-size: 24rpx;
   color: #999;
-}
-
-.query-actions {
-  display: flex;
-  gap: 24rpx;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-}
-
-.action-icon-img {
-  width: 28rpx;
-  height: 28rpx;
-  margin-right: 6rpx;
-}
-
-.action-text {
-  font-size: 24rpx;
-  color: #666;
 }
 
 .empty-tip {

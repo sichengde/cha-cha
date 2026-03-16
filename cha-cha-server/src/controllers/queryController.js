@@ -1,10 +1,17 @@
 const { v4: uuidv4 } = require('uuid')
 const { query, queryOne, insert, update, remove } = require('../config/database')
 
+function toMySQLDateTime(isoString) {
+  if (!isoString) return null
+  const date = new Date(isoString)
+  if (isNaN(date.getTime())) return null
+  return date.toISOString().slice(0, 19).replace('T', ' ')
+}
+
 const createQueryPage = async (req, res) => {
   try {
     const userId = req.user.id
-    const { name, description, allow_modify, enable_sign, require_nickname, query_limit, headers, data } = req.body
+    const { name, description, allow_modify, enable_sign, require_nickname, query_limit, headers, data, start_time, end_time } = req.body
 
     if (!name || !headers || !data) {
       return res.status(400).json({
@@ -20,16 +27,13 @@ const createQueryPage = async (req, res) => {
       user_id: userId,
       name,
       description: description || '',
-      cover_url: '',
       status: 'active',
-      settings: JSON.stringify({}),
       allow_modify: allow_modify || false,
       enable_sign: enable_sign || false,
       require_nickname: require_nickname || false,
       query_limit: query_limit || 0,
-      query_time_limit: null,
-      start_time: null,
-      end_time: null
+      start_time: toMySQLDateTime(start_time),
+      end_time: toMySQLDateTime(end_time)
     })
 
     for (let i = 0; i < headers.length; i++) {
@@ -48,8 +52,7 @@ const createQueryPage = async (req, res) => {
         query_page_id: queryPageId,
         row_index: i,
         data: JSON.stringify(data[i]),
-        original_data: JSON.stringify(data[i]),
-        image_url: null
+        original_data: JSON.stringify(data[i])
       })
     }
 
@@ -62,9 +65,11 @@ const createQueryPage = async (req, res) => {
     })
   } catch (error) {
     console.error('创建查询页面失败:', error)
+    console.error('错误详情:', error.message)
+    console.error('错误堆栈:', error.stack)
     res.status(500).json({
       success: false,
-      message: '创建查询页面失败'
+      message: '创建查询页面失败: ' + error.message
     })
   }
 }
@@ -98,7 +103,12 @@ const getQueryPage = async (req, res) => {
       [id]
     )
 
-    queryPage.settings = JSON.parse(queryPage.settings || '{}')
+    queryPage.settings = {
+      allowModify: queryPage.allow_modify,
+      enableSign: queryPage.enable_sign,
+      requireNickname: queryPage.require_nickname,
+      queryLimit: queryPage.query_limit
+    }
     queryPage.headers = headers
     queryPage.data_count = dataCount.count
 
@@ -142,11 +152,11 @@ const getMyQueryPages = async (req, res) => {
     const queryPages = await query(sql, params)
 
     for (const page of queryPages) {
-      try {
-        page.settings = JSON.parse(page.settings || '{}')
-      } catch (e) {
-        console.error('解析settings失败:', e)
-        page.settings = {}
+      page.settings = {
+        allowModify: page.allow_modify,
+        enableSign: page.enable_sign,
+        requireNickname: page.require_nickname,
+        queryLimit: page.query_limit
       }
     }
 
@@ -199,7 +209,6 @@ const updateQueryPage = async (req, res) => {
     if (name !== undefined) updateData.name = name
     if (description !== undefined) updateData.description = description
     if (status !== undefined) updateData.status = status
-    if (settings !== undefined) updateData.settings = JSON.stringify(settings || {})
     if (allow_modify !== undefined) updateData.allow_modify = allow_modify
     if (enable_sign !== undefined) updateData.enable_sign = enable_sign
     if (require_nickname !== undefined) updateData.require_nickname = require_nickname

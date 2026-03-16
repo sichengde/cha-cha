@@ -24,17 +24,26 @@ Page({
 
   refreshData: function() {
     var that = this
-    var isLoggedIn = app.globalData.isLoggedIn
-    var userInfo = app.globalData.userInfo
+    
+    app.ensureLogin().then(function() {
+      var isLoggedIn = app.globalData.isLoggedIn
+      var userInfo = app.globalData.userInfo
 
-    this.setData({
-      isLoggedIn: isLoggedIn,
-      userInfo: userInfo
+      that.setData({
+        isLoggedIn: isLoggedIn,
+        userInfo: userInfo
+      })
+
+      if (isLoggedIn) {
+        that.loadRecentQueries()
+      }
+    }).catch(function() {
+      that.setData({
+        isLoggedIn: false,
+        userInfo: null,
+        loading: false
+      })
     })
-
-    if (isLoggedIn) {
-      this.loadRecentQueries()
-    }
   },
 
   loadRecentQueries: function() {
@@ -131,5 +140,20 @@ Page({
     wx.navigateTo({
       url: '/pages/manage/manage?id=' + id
     })
+  },
+
+  onShareAppMessage: function(e) {
+    if (e.from === 'button') {
+      var id = e.target.dataset.id
+      var name = e.target.dataset.name || '来查查'
+      return {
+        title: name,
+        path: '/pages/query/query?id=' + id
+      }
+    }
+    return {
+      title: '查查助手',
+      path: '/pages/index/index'
+    }
   }
 })

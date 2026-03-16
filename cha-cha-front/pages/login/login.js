@@ -6,29 +6,28 @@ Page({
   },
 
   onLoad: function() {
-    this.checkAndRedirect()
+    this.doLogin()
   },
 
   onShow: function() {
-    this.checkAndRedirect()
-  },
-
-  checkAndRedirect: function() {
-    var that = this
     if (app.globalData.isLoggedIn) {
       this.redirectToHome()
-      return
     }
-    
+  },
+
+  doLogin: function() {
+    var that = this
     this.setData({ loading: true })
     
-    setTimeout(function() {
+    app.ensureLogin().then(function() {
       if (app.globalData.isLoggedIn) {
         that.redirectToHome()
       } else {
         that.setData({ loading: false })
       }
-    }, 1500)
+    }).catch(function() {
+      that.setData({ loading: false })
+    })
   },
 
   redirectToHome: function() {

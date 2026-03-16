@@ -5,7 +5,7 @@ App({
   globalData: {
     userInfo: null,
     isLoggedIn: false,
-    baseUrl: 'http://192.168.1.14:3000',
+    baseUrl: 'http://10.3.4.59:3000',
     querySettings: null,
     loginPromise: null
   },

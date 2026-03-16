@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "查询管理"
+  "navigationBarTitleText": "查询管理",
+  "navigationStyle": "custom"
 }

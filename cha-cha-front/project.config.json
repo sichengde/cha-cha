@@ -48,7 +48,7 @@
     "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "3.3.4",
+  "libVersion": "3.15.0",
   "appid": "wxd9d370b49d12a671",
   "projectname": "cha-cha",
   "condition": {},

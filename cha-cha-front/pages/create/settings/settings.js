@@ -20,7 +20,9 @@ Page({
     endTimeText: '',
     startTimeValue: [0, 0, 0, 0, 0],
     endTimeValue: [0, 0, 0, 0, 0],
-    dateTimeArray: []
+    dateTimeArray: [],
+    showShareModal: false,
+    createdQueryId: null
   },
 
   onLoad: function() {
@@ -260,8 +262,9 @@ Page({
       wx.hideLoading()
       if (res.success) {
         app.globalData.createdQueryId = res.data.id
-        wx.redirectTo({
-          url: '/pages/create/success/success?id=' + res.data.id
+        that.setData({
+          showShareModal: true,
+          createdQueryId: res.data.id
         })
       } else {
         wx.showToast({ title: res.message || '创建失败', icon: 'none' })
@@ -270,5 +273,20 @@ Page({
       wx.hideLoading()
       wx.showToast({ title: '网络错误，请重试', icon: 'none' })
     })
+  },
+
+  hideShareModal: function() {
+    this.setData({ showShareModal: false })
+    wx.switchTab({
+      url: '/pages/index/index'
+    })
+  },
+
+  onShareAppMessage: function() {
+    var queryId = this.data.createdQueryId || app.globalData.createdQueryId
+    return {
+      title: '来查查',
+      path: '/pages/query/query?id=' + queryId
+    }
   }
 })

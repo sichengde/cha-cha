@@ -1,4 +1,14 @@
 <view class="about-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="goBack">
+        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">关于我们</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
   <view class="about-header">
     <image class="app-logo" src="/assets/images/logo.svg" mode="aspectFit"></image>
     <text class="app-name">查查助手</text>
