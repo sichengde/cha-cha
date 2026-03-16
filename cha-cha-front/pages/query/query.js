@@ -73,11 +73,16 @@ Page({
     this.setData({ loading: true })
     
     queryApi.getDetail(queryId).then(function(data) {
+      console.log('查询详情返回:', data)
       if (data.success) {
         var queryInfo = data.data
         var headers = queryInfo.headers || []
         var settings = queryInfo.settings || {}
         var conditions = settings.conditions || []
+        
+        console.log('headers:', headers)
+        console.log('settings:', settings)
+        console.log('conditions:', conditions)
         
         var queryConditions = conditions.map(function(idx) {
           return {
@@ -85,6 +90,8 @@ Page({
             value: ''
           }
         })
+
+        console.log('queryConditions:', queryConditions)
 
         that.setData({
           queryInfo: queryInfo,
@@ -97,7 +104,8 @@ Page({
           loading: false
         })
       }
-    }).catch(function() {
+    }).catch(function(err) {
+      console.error('加载失败:', err)
       that.setData({
         queryError: '加载失败',
         loading: false
@@ -368,6 +376,12 @@ Page({
       signatureImage: '',
       queryDataId: null,
       signed: false
+    })
+  },
+
+  goBack: function() {
+    wx.navigateBack({
+      delta: 1
     })
   }
 })

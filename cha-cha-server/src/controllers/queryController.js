@@ -98,6 +98,12 @@ const getQueryPage = async (req, res) => {
       [id]
     )
 
+    const conditions = headers
+      .map((h, idx) => h.is_condition ? idx : -1)
+      .filter(idx => idx !== -1)
+
+    console.log('查询条件索引:', conditions)
+
     const dataCount = await queryOne(
       'SELECT COUNT(*) as count FROM query_data WHERE query_page_id = ?',
       [id]
@@ -107,8 +113,12 @@ const getQueryPage = async (req, res) => {
       allowModify: queryPage.allow_modify,
       enableSign: queryPage.enable_sign,
       requireNickname: queryPage.require_nickname,
-      queryLimit: queryPage.query_limit
+      queryLimit: queryPage.query_limit,
+      conditions: conditions
     }
+    
+    console.log('返回的settings:', queryPage.settings)
+    
     queryPage.headers = headers
     queryPage.data_count = dataCount.count
 

@@ -4,29 +4,84 @@
       <view class="navbar-left" bindtap="goBack">
         <text class="back-arrow">‹</text>
       </view>
-      <view class="navbar-title">查询</view>
+      <view class="navbar-title">{{queryInfo.name || '查询'}}</view>
       <view class="navbar-right"></view>
     </view>
   </view>
 
   <view class="content">
-    <view class="search-box">
-      <view class="search-input-box">
-        <input class="search-input" placeholder="请输入查询编号" value="{{queryCode}}" bindinput="onCodeInput" />
-      </view>
-      <button class="search-btn" bindtap="doSearch">进入查询</button>
+    <view wx:if="{{loading}}" class="loading-box">
+      <text>加载中...</text>
     </view>
 
-    <view class="tips-box">
-      <view class="tips-header">
-        <view class="tips-title">温馨提示</view>
-        <view class="help-btn" bindtap="showHelp">
-          <text class="help-text">如何获取编号？</text>
-          <text class="help-arrow">›</text>
+    <view wx:elif="{{queryError && !queryInfo}}" class="error-box">
+      <text class="error-text">{{queryError}}</text>
+    </view>
+
+    <view wx:elif="{{!queryResult}}" class="query-form">
+      <view wx:if="{{queryInfo.description}}" class="description-box">
+        <text class="description-text">{{queryInfo.description}}</text>
+      </view>
+
+      <view wx:if="{{queryError}}" class="error-tip-box">
+        <text class="error-tip-text">{{queryError}}</text>
+      </view>
+
+      <view class="conditions-box">
+        <view wx:for="{{queryConditions}}" wx:key="label" class="condition-item">
+          <view class="condition-label">{{item.label}}</view>
+          <input 
+            class="condition-input" 
+            placeholder="请输入{{item.label}}" 
+            value="{{item.value}}" 
+            bindinput="onConditionInput" 
+            data-index="{{index}}"
+          />
         </view>
       </view>
-      <view class="tips-content">
-        <text class="tips-text">若你已有「查询页的入口」，无需输入编号就能查询。</text>
+
+      <button class="query-btn" bindtap="doQuery">查询</button>
+    </view>
+
+    <view wx:else class="result-box">
+      <view class="result-header">
+        <text class="result-title">查询结果</text>
+        <text class="reset-btn" bindtap="resetQuery">重新查询</text>
+      </view>
+
+      <view class="result-content">
+        <view wx:for="{{queryResult}}" wx:key="label" class="result-item">
+          <view class="result-label">{{item.label}}</view>
+          <view class="result-value {{item.modified ? 'modified' : ''}}">{{item.value}}</view>
+        </view>
+      </view>
+
+      <view wx:if="{{allowModify && modifiableFields.length > 0}}" class="modify-box">
+        <view class="modify-title">修改信息</view>
+        <view wx:for="{{modifiableFields}}" wx:key="label" class="modify-item">
+          <view class="modify-label">{{item.label}}</view>
+          <input 
+            class="modify-input" 
+            placeholder="当前值：{{item.value}}" 
+            value="{{item.newValue}}" 
+            bindinput="onModifyInput" 
+            data-index="{{index}}"
+          />
+        </view>
+        <button class="modify-btn" bindtap="submitModify">提交修改</button>
+      </view>
+
+      <view wx:if="{{enableSign && !signed}}" class="sign-box">
+        <view class="sign-title">签收确认</view>
+        <view wx:if="{{signType === 'signature'}}" class="signature-area">
+          <image wx:if="{{signatureImage}}" class="signature-image" src="{{signatureImage}}" mode="aspectFit"></image>
+          <button class="sign-btn" bindtap="showSignature">{{signatureImage ? '重新签名' : '点击签名'}}</button>
+        </view>
+        <button class="confirm-btn" bindtap="confirmSign">确认签收</button>
+      </view>
+
+      <view wx:if="{{signed}}" class="signed-box">
+        <text class="signed-text">✓ 已签收</text>
       </view>
     </view>
   </view>

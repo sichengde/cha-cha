@@ -5,9 +5,6 @@
         <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
       </view>
       <view class="navbar-title">设置查询条件</view>
-      <view class="navbar-right">
-        <text class="help-link">有疑问？</text>
-      </view>
     </view>
   </view>
 

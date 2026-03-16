@@ -1,5 +1,5 @@
 var util = require('./util')
-var BASE_URL = 'http://10.3.4.59:3000'
+var BASE_URL = 'http://192.168.1.14:3000'
 
 function request(options) {
   var url = options.url

@@ -285,7 +285,7 @@ Page({
   onShareAppMessage: function() {
     var queryId = this.data.createdQueryId || app.globalData.createdQueryId
     return {
-      title: '来查查',
+      title: this.data.name || '查查助手',
       path: '/pages/query/query?id=' + queryId
     }
   }
