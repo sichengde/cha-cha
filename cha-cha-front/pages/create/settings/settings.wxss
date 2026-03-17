@@ -133,6 +133,7 @@
   right: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 20rpx 30rpx;
   background: #fff;
   border-top: 1rpx solid #f0f0f0;
@@ -140,7 +141,8 @@
 }
 
 .btn-save {
-  flex: 1;
+  width: 100%;
+  max-width: 690rpx;
   height: 88rpx;
   background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
   border-radius: 44rpx;

@@ -17,7 +17,11 @@ if (USE_MEMORY_DB) {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    timezone: '+08:00'
+    timezone: '+08:00',
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
+    connectTimeout: 10000,
+    acquireTimeout: 10000
   })
 
   const query = async (sql, params = []) => {

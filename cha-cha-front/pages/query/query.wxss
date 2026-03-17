@@ -58,9 +58,13 @@
   background: #fff;
   border-radius: 24rpx;
   padding: 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .description-box {
+  width: 100%;
   margin-bottom: 32rpx;
   padding-bottom: 24rpx;
   border-bottom: 1rpx solid #f0f0f0;
@@ -73,6 +77,7 @@
 }
 
 .error-tip-box {
+  width: 100%;
   background: #fff3f3;
   border-radius: 16rpx;
   padding: 24rpx;
@@ -87,6 +92,7 @@
 }
 
 .conditions-box {
+  width: 100%;
   margin-bottom: 32rpx;
 }
 
@@ -111,6 +117,7 @@
 
 .query-btn {
   width: 100%;
+  max-width: 626rpx;
   background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
   color: #fff;
   font-size: 32rpx;

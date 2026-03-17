@@ -5,6 +5,7 @@
         <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
       </view>
       <view class="navbar-title">设置查询条件</view>
+      <view class="navbar-right"></view>
     </view>
   </view>
 
@@ -15,7 +16,7 @@
     </view>
 
     <view class="example-tip">
-      <text class="example-text">例如想通过「姓名」查询，就勾选「姓名」，可多选</text>
+      <text class="example-text">例如想通过「{{headers[0].name}}」查询，就勾选「{{headers[0].name}}」，可多选</text>
     </view>
 
     <view class="condition-list">

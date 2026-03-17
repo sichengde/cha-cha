@@ -260,6 +260,20 @@
 .table-row.header {
   background: #f5f5f5;
   font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table-row.header::before {
+  content: '';
+  position: absolute;
+  left: -1000rpx;
+  right: -1000rpx;
+  top: 0;
+  bottom: 0;
+  background: #f5f5f5;
+  z-index: -1;
 }
 
 .table-cell {
@@ -268,6 +282,12 @@
   font-size: 24rpx;
   color: #333;
   text-align: center;
+  position: relative;
+  background: inherit;
+}
+
+.table-row.header .table-cell {
+  background: #f5f5f5;
 }
 
 .status-tag {
