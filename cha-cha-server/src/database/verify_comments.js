@@ -1,21 +1,17 @@
-require('dotenv').config()
 const mysql = require('mysql2/promise')
+const { getDbConfig, getDbName } = require('../config/dbConfig')
 
 const verifyComments = async () => {
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-  })
+  const dbConfig = getDbConfig()
+  const dbName = getDbName()
+  const connection = await mysql.createConnection(dbConfig)
 
   console.log('\n=== 表注释 ===')
   const [tables] = await connection.query(`
     SELECT TABLE_NAME, TABLE_COMMENT 
     FROM information_schema.TABLES 
     WHERE TABLE_SCHEMA = ?
-  `, [process.env.DB_NAME])
+  `, [dbName])
   
   tables.forEach(t => {
     console.log(`${t.TABLE_NAME}: ${t.TABLE_COMMENT}`)
@@ -27,7 +23,7 @@ const verifyComments = async () => {
     FROM information_schema.COLUMNS 
     WHERE TABLE_SCHEMA = ?
     ORDER BY TABLE_NAME, ORDINAL_POSITION
-  `, [process.env.DB_NAME])
+  `, [dbName])
   
   let currentTable = ''
   columns.forEach(c => {

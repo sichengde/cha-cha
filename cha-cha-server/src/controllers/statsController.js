@@ -1,14 +1,51 @@
 const { query, queryOne } = require('../config/database')
+const { parseJson } = require('../utils/json')
+
+const getPaging = (rawPage, rawPageSize) => {
+  const page = Math.max(parseInt(rawPage, 10) || 1, 1)
+  const pageSize = Math.min(Math.max(parseInt(rawPageSize, 10) || 20, 1), 200)
+  const offset = (page - 1) * pageSize
+  return { page, pageSize, offset }
+}
+
+const ensureOwner = async (queryPageId, userId) => {
+  return queryOne(
+    'SELECT id, allow_modify, enable_sign FROM query_pages WHERE id = ? AND user_id = ?',
+    [queryPageId, userId]
+  )
+}
+
+const getHeaders = async (queryPageId) => {
+  return query(
+    'SELECT * FROM query_headers WHERE query_page_id = ? ORDER BY column_index',
+    [queryPageId]
+  )
+}
+
+const formatListRows = (rows, headers, getMeta) => {
+  return rows.map((row) => {
+    const data = parseJson(row.data, {})
+    const result = {}
+
+    headers.forEach((h) => {
+      result[h.column_name] = data[h.column_index]
+    })
+
+    const meta = getMeta(row)
+    result._queried = Boolean(meta.queried)
+    result._signed = Boolean(meta.signed)
+    result._queryTime = meta.queryTime || ''
+
+    return result
+  })
+}
 
 const getStatistics = async (req, res) => {
   try {
     const { id } = req.params
     const userId = req.user.id
 
-    const queryPage = await queryOne(
-      'SELECT * FROM query_pages WHERE id = ? AND user_id = ?',
-      [id, userId]
-    )
+    const queryPage = await ensureOwner(id, userId)
 
     if (!queryPage) {
       return res.status(404).json({
@@ -66,13 +103,10 @@ const getStatistics = async (req, res) => {
       [id]
     )
 
-    const headers = await query(
-      'SELECT * FROM query_headers WHERE query_page_id = ? ORDER BY column_index',
-      [id]
-    )
+    const headers = await getHeaders(id)
 
     const recentQueriesFormatted = recentQueries.map(q => {
-      const data = JSON.parse(q.data)
+      const data = parseJson(q.data, {})
       const result = {}
       headers.forEach(h => {
         result[h.column_name] = data[h.column_index]
@@ -114,12 +148,9 @@ const getAllDataList = async (req, res) => {
   try {
     const { id } = req.params
     const userId = req.user.id
-    const { page = 1, pageSize = 20 } = req.query
+    const { page, pageSize, offset } = getPaging(req.query.page, req.query.pageSize)
 
-    const queryPage = await queryOne(
-      'SELECT * FROM query_pages WHERE id = ? AND user_id = ?',
-      [id, userId]
-    )
+    const queryPage = await ensureOwner(id, userId)
 
     if (!queryPage) {
       return res.status(404).json({
@@ -128,20 +159,18 @@ const getAllDataList = async (req, res) => {
       })
     }
 
-    const headers = await query(
-      'SELECT * FROM query_headers WHERE query_page_id = ? ORDER BY column_index',
-      [id]
-    )
+    const headers = await getHeaders(id)
 
     const allData = await query(
       `SELECT qd.*, 
-              (SELECT COUNT(*) FROM query_records qr WHERE qr.query_data_id = qd.id) as query_count,
-              (SELECT COUNT(*) FROM signatures s WHERE s.query_data_id = qd.id) as sign_count
+              (SELECT COUNT(*) FROM query_records qr WHERE qr.query_data_id = qd.id AND qr.query_page_id = qd.query_page_id) as query_count,
+              (SELECT MAX(qr.query_time) FROM query_records qr WHERE qr.query_data_id = qd.id AND qr.query_page_id = qd.query_page_id) as latest_query_time,
+              (SELECT COUNT(*) FROM signatures s WHERE s.query_data_id = qd.id AND s.query_page_id = qd.query_page_id) as sign_count
        FROM query_data qd 
        WHERE qd.query_page_id = ?
        ORDER BY qd.row_index 
        LIMIT ? OFFSET ?`,
-      [id, parseInt(pageSize), (parseInt(page) - 1) * parseInt(pageSize)]
+      [id, pageSize, offset]
     )
 
     const totalResult = await queryOne(
@@ -149,24 +178,19 @@ const getAllDataList = async (req, res) => {
       [id]
     )
 
-    const formattedData = allData.map(row => {
-      const data = JSON.parse(row.data)
-      const result = {}
-      headers.forEach(h => {
-        result[h.column_name] = data[h.column_index]
-      })
-      result._queried = row.query_count > 0
-      result._signed = row.sign_count > 0
-      return result
-    })
+    const formattedData = formatListRows(allData, headers, (row) => ({
+      queried: row.query_count > 0,
+      signed: row.sign_count > 0,
+      queryTime: row.latest_query_time
+    }))
 
     res.json({
       success: true,
       data: {
         list: formattedData,
         total: totalResult.total,
-        page: parseInt(page),
-        pageSize: parseInt(pageSize)
+        page,
+        pageSize
       }
     })
   } catch (error) {
@@ -178,16 +202,80 @@ const getAllDataList = async (req, res) => {
   }
 }
 
+const getQueriedList = async (req, res) => {
+  try {
+    const { id } = req.params
+    const userId = req.user.id
+    const { page, pageSize, offset } = getPaging(req.query.page, req.query.pageSize)
+
+    const queryPage = await ensureOwner(id, userId)
+    if (!queryPage) {
+      return res.status(404).json({
+        success: false,
+        message: '查询页面不存在或无权限'
+      })
+    }
+
+    const headers = await getHeaders(id)
+
+    const queriedData = await query(
+      `SELECT qd.*, qr.latest_query_time,
+              (SELECT COUNT(*) FROM signatures s WHERE s.query_data_id = qd.id AND s.query_page_id = qd.query_page_id) as sign_count
+       FROM query_data qd
+       INNER JOIN (
+         SELECT query_data_id, MAX(query_time) as latest_query_time
+         FROM query_records
+         WHERE query_page_id = ?
+         GROUP BY query_data_id
+       ) qr ON qd.id = qr.query_data_id
+       WHERE qd.query_page_id = ?
+       ORDER BY qd.row_index
+       LIMIT ? OFFSET ?`,
+      [id, id, pageSize, offset]
+    )
+
+    const totalResult = await queryOne(
+      `SELECT COUNT(*) as total
+       FROM (
+         SELECT query_data_id
+         FROM query_records
+         WHERE query_page_id = ?
+         GROUP BY query_data_id
+       ) t`,
+      [id]
+    )
+
+    const formattedData = formatListRows(queriedData, headers, (row) => ({
+      queried: true,
+      signed: row.sign_count > 0,
+      queryTime: row.latest_query_time
+    }))
+
+    res.json({
+      success: true,
+      data: {
+        list: formattedData,
+        total: totalResult.total,
+        page,
+        pageSize
+      }
+    })
+  } catch (error) {
+    console.error('获取已查询列表失败:', error)
+    res.status(500).json({
+      success: false,
+      message: '获取已查询列表失败'
+    })
+  }
+}
+
 const getUnqueriedList = async (req, res) => {
   try {
     const { id } = req.params
     const userId = req.user.id
-    const { page = 1, pageSize = 20 } = req.query
+    const { page, pageSize, offset } = getPaging(req.query.page, req.query.pageSize)
 
-    const queryPage = await queryOne(
-      'SELECT * FROM query_pages WHERE id = ? AND user_id = ?',
-      [id, userId]
-    )
+    const queryPage = await ensureOwner(id, userId)
 
     if (!queryPage) {
       return res.status(404).json({
@@ -196,45 +284,45 @@ const getUnqueriedList = async (req, res) => {
       })
     }
 
-    const headers = await query(
-      'SELECT * FROM query_headers WHERE query_page_id = ? ORDER BY column_index',
-      [id]
-    )
+    const headers = await getHeaders(id)
 
     const unqueriedData = await query(
       `SELECT qd.* 
        FROM query_data qd 
-       LEFT JOIN query_records qr ON qd.id = qr.query_data_id 
-       WHERE qd.query_page_id = ? AND qr.id IS NULL 
+       WHERE qd.query_page_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM query_records qr
+           WHERE qr.query_data_id = qd.id AND qr.query_page_id = qd.query_page_id
+         )
        ORDER BY qd.row_index 
        LIMIT ? OFFSET ?`,
-      [id, parseInt(pageSize), (parseInt(page) - 1) * parseInt(pageSize)]
+      [id, pageSize, offset]
     )
 
     const totalResult = await queryOne(
       `SELECT COUNT(*) as total 
        FROM query_data qd 
-       LEFT JOIN query_records qr ON qd.id = qr.query_data_id 
-       WHERE qd.query_page_id = ? AND qr.id IS NULL`,
+       WHERE qd.query_page_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM query_records qr
+           WHERE qr.query_data_id = qd.id AND qr.query_page_id = qd.query_page_id
+         )`,
       [id]
     )
 
-    const formattedData = unqueriedData.map(row => {
-      const data = JSON.parse(row.data)
-      const result = {}
-      headers.forEach(h => {
-        result[h.column_name] = data[h.column_index]
-      })
-      return result
-    })
+    const formattedData = formatListRows(unqueriedData, headers, () => ({
+      queried: false,
+      signed: false,
+      queryTime: ''
+    }))
 
     res.json({
       success: true,
       data: {
         list: formattedData,
         total: totalResult.total,
-        page: parseInt(page),
-        pageSize: parseInt(pageSize)
+        page,
+        pageSize
       }
     })
   } catch (error) {
@@ -246,16 +334,70 @@ const getUnqueriedList = async (req, res) => {
   }
 }
 
+const getSignedList = async (req, res) => {
+  try {
+    const { id } = req.params
+    const userId = req.user.id
+    const { page, pageSize, offset } = getPaging(req.query.page, req.query.pageSize)
+
+    const queryPage = await ensureOwner(id, userId)
+    if (!queryPage) {
+      return res.status(404).json({
+        success: false,
+        message: '查询页面不存在或无权限'
+      })
+    }
+
+    const headers = await getHeaders(id)
+
+    const signedData = await query(
+      `SELECT qd.*, s.signed_at
+       FROM query_data qd
+       INNER JOIN signatures s
+         ON qd.id = s.query_data_id
+        AND s.query_page_id = qd.query_page_id
+       WHERE qd.query_page_id = ?
+       ORDER BY qd.row_index
+       LIMIT ? OFFSET ?`,
+      [id, pageSize, offset]
+    )
+
+    const totalResult = await queryOne(
+      'SELECT COUNT(*) as total FROM signatures WHERE query_page_id = ?',
+      [id]
+    )
+
+    const formattedData = formatListRows(signedData, headers, (row) => ({
+      queried: true,
+      signed: true,
+      queryTime: row.signed_at
+    }))
+
+    res.json({
+      success: true,
+      data: {
+        list: formattedData,
+        total: totalResult.total,
+        page,
+        pageSize
+      }
+    })
+  } catch (error) {
+    console.error('获取已签收列表失败:', error)
+    res.status(500).json({
+      success: false,
+      message: '获取已签收列表失败'
+    })
+  }
+}
+
 const getUnsignedList = async (req, res) => {
   try {
     const { id } = req.params
     const userId = req.user.id
-    const { page = 1, pageSize = 20 } = req.query
+    const { page, pageSize, offset } = getPaging(req.query.page, req.query.pageSize)
 
-    const queryPage = await queryOne(
-      'SELECT * FROM query_pages WHERE id = ? AND user_id = ?',
-      [id, userId]
-    )
+    const queryPage = await ensureOwner(id, userId)
 
     if (!queryPage) {
       return res.status(404).json({
@@ -264,45 +406,47 @@ const getUnsignedList = async (req, res) => {
       })
     }
 
-    const headers = await query(
-      'SELECT * FROM query_headers WHERE query_page_id = ? ORDER BY column_index',
-      [id]
-    )
+    const headers = await getHeaders(id)
 
     const unsignedData = await query(
-      `SELECT qd.* 
+      `SELECT qd.*,
+              (SELECT COUNT(*) FROM query_records qr WHERE qr.query_data_id = qd.id AND qr.query_page_id = qd.query_page_id) as query_count,
+              (SELECT MAX(qr.query_time) FROM query_records qr WHERE qr.query_data_id = qd.id AND qr.query_page_id = qd.query_page_id) as latest_query_time
        FROM query_data qd 
-       LEFT JOIN signatures s ON qd.id = s.query_data_id 
-       WHERE qd.query_page_id = ? AND s.id IS NULL 
+       WHERE qd.query_page_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM signatures s
+           WHERE s.query_data_id = qd.id AND s.query_page_id = qd.query_page_id
+         )
        ORDER BY qd.row_index 
        LIMIT ? OFFSET ?`,
-      [id, parseInt(pageSize), (parseInt(page) - 1) * parseInt(pageSize)]
+      [id, pageSize, offset]
     )
 
     const totalResult = await queryOne(
       `SELECT COUNT(*) as total 
        FROM query_data qd 
-       LEFT JOIN signatures s ON qd.id = s.query_data_id 
-       WHERE qd.query_page_id = ? AND s.id IS NULL`,
+       WHERE qd.query_page_id = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM signatures s
+           WHERE s.query_data_id = qd.id AND s.query_page_id = qd.query_page_id
+         )`,
       [id]
     )
 
-    const formattedData = unsignedData.map(row => {
-      const data = JSON.parse(row.data)
-      const result = {}
-      headers.forEach(h => {
-        result[h.column_name] = data[h.column_index]
-      })
-      return result
-    })
+    const formattedData = formatListRows(unsignedData, headers, (row) => ({
+      queried: row.query_count > 0,
+      signed: false,
+      queryTime: row.latest_query_time
+    }))
 
     res.json({
       success: true,
       data: {
         list: formattedData,
         total: totalResult.total,
-        page: parseInt(page),
-        pageSize: parseInt(pageSize)
+        page,
+        pageSize
       }
     })
   } catch (error) {
@@ -317,6 +461,8 @@ const getUnsignedList = async (req, res) => {
 module.exports = {
   getStatistics,
   getAllDataList,
+  getQueriedList,
   getUnqueriedList,
+  getSignedList,
   getUnsignedList
 }

@@ -1,4 +1,7 @@
-const https = require('http')
+const http = require('http')
+const { readEnvInt, readEnvString } = require('../src/config/env')
+
+const testAuthToken = readEnvString('TEST_AUTH_TOKEN', '')
 
 const testData = JSON.stringify({
   name: "0416--项目房源合同情况统计表.xlsx",
@@ -27,18 +30,23 @@ const testData = JSON.stringify({
 })
 
 const options = {
-  hostname: '192.168.1.14',
-  port: 3000,
+  hostname: readEnvString('TEST_API_HOST', '127.0.0.1'),
+  port: readEnvInt('TEST_API_PORT', 3000),
   path: '/api/queries',
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
     'Content-Length': Buffer.byteLength(testData),
-    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyNzNjNGMwNC1hNWZhLTRkNjktOWI5MS0xNjRmZTk3NGQ4OWYiLCJpYXQiOjE3MTAwMDAwMDAsImV4cCI6MTcxMDYwNDgwMH0.test'
+    'Authorization': 'Bearer ' + testAuthToken
   }
 }
 
-const req = https.request(options, (res) => {
+if (!testAuthToken) {
+  console.error('请先设置 TEST_AUTH_TOKEN 再运行该脚本')
+  process.exit(1)
+}
+
+const req = http.request(options, (res) => {
   let data = ''
 
   res.on('data', (chunk) => {

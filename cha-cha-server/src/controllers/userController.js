@@ -4,26 +4,40 @@ const { generateToken } = require('../config/auth')
 
 const loginOrRegister = async (req, res) => {
   try {
-    const { openid, nickname, avatar_url } = req.body
-    console.log('登录请求:', { openid, nickname, avatar_url, body: req.body })
+    const { openid, login_code, nickname, avatar_url } = req.body
 
-    if (!openid) {
+    if (!openid && !login_code) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少登录凭证'
+      })
+    }
+
+    const normalizedOpenid = String(openid || '').trim()
+    if (!normalizedOpenid) {
       return res.status(400).json({
         success: false,
         message: 'openid不能为空'
       })
     }
 
+    if (!/^[a-zA-Z0-9_-]{3,100}$/.test(normalizedOpenid)) {
+      return res.status(400).json({
+        success: false,
+        message: 'openid格式不正确'
+      })
+    }
+
     let user = await queryOne(
       'SELECT * FROM users WHERE openid = ?',
-      [openid]
+      [normalizedOpenid]
     )
 
     if (!user) {
       const userId = uuidv4()
       await insert('users', {
         id: userId,
-        openid,
+        openid: normalizedOpenid,
         nickname: nickname || '微信用户',
         avatar_url: avatar_url || ''
       })

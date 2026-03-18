@@ -1,19 +1,17 @@
-require('dotenv').config()
 const mysql = require('mysql2/promise')
 const fs = require('fs')
 const path = require('path')
+const { getDbConfig } = require('../config/dbConfig')
 
 const cleanup = async () => {
+  const dbConfig = getDbConfig()
+
   console.log('连接数据库...')
-  console.log(`Host: ${process.env.DB_HOST}`)
-  console.log(`Database: ${process.env.DB_NAME}`)
+  console.log(`Host: ${dbConfig.host}`)
+  console.log(`Database: ${dbConfig.database}`)
   
   const connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    ...dbConfig,
     multipleStatements: true
   })
   

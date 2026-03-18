@@ -1,10 +1,11 @@
 const http = require('http')
+const { readEnvInt, readEnvString } = require('../src/config/env')
 
 const queryId = 'c3ba3163-7536-4928-b912-5dcf2d768eb5'
 
 const options = {
-  hostname: '192.168.1.14',
-  port: 3000,
+  hostname: readEnvString('TEST_API_HOST', '127.0.0.1'),
+  port: readEnvInt('TEST_API_PORT', 3000),
   path: '/api/queries/' + queryId,
   method: 'GET',
   headers: {

@@ -3,25 +3,33 @@ var app = getApp()
 Page({
   data: {
     statusBarHeight: 44,
-    headers: []
+    headers: [],
+    editId: ''
   },
 
   onLoad: function(options) {
     var systemInfo = wx.getSystemInfoSync()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44
+      statusBarHeight: systemInfo.statusBarHeight || 44,
+      editId: options && options.editId ? options.editId : ''
     })
     this.initHeaders()
   },
 
   initHeaders: function() {
     var uploadedFile = app.globalData.uploadedFile
+    var selectedHeaders = app.globalData.selectedHeaders || []
+    var selectedNames = {}
+    selectedHeaders.forEach(function(header) {
+      selectedNames[header.name] = true
+    })
+
     if (uploadedFile && uploadedFile.headers) {
       var headers = uploadedFile.headers.map(function(name, index) {
         return {
           name: name,
           index: index,
-          selected: false
+          selected: !!selectedNames[name]
         }
       })
       this.setData({ headers: headers })
@@ -33,9 +41,8 @@ Page({
   },
 
   reselectHeader: function() {
-    wx.showToast({
-      title: '功能开发中',
-      icon: 'none'
+    wx.navigateBack({
+      delta: 1
     })
   },
 
@@ -57,6 +64,14 @@ Page({
     }
 
     app.globalData.selectedHeaders = selectedHeaders
+
+    if (this.data.editId) {
+      wx.navigateBack({
+        delta: 1
+      })
+      return
+    }
+
     wx.navigateTo({
       url: '/pages/create/settings/settings'
     })

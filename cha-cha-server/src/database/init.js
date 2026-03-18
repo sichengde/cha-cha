@@ -1,31 +1,72 @@
-require('dotenv').config()
 const fs = require('fs')
 const path = require('path')
 const mysql = require('mysql2/promise')
+const { getDbConfig, getDbName, getDbServerConfig } = require('../config/dbConfig')
+
+const ensureUniqueIndexes = async (connection, dbName) => {
+  const indexConfigs = [
+    {
+      table: 'query_records',
+      indexName: 'uk_query_record_user',
+      alterSQL: 'ALTER TABLE query_records ADD UNIQUE KEY uk_query_record_user (query_page_id, query_data_id, openid)'
+    },
+    {
+      table: 'signatures',
+      indexName: 'uk_signature_page_data',
+      alterSQL: 'ALTER TABLE signatures ADD UNIQUE KEY uk_signature_page_data (query_page_id, query_data_id)'
+    }
+  ]
+
+  for (const config of indexConfigs) {
+    const [existing] = await connection.query(
+      `SELECT 1
+       FROM information_schema.statistics
+       WHERE table_schema = ? AND table_name = ? AND index_name = ?
+       LIMIT 1`,
+      [dbName, config.table, config.indexName]
+    )
+
+    if (existing.length > 0) {
+      continue
+    }
+
+    try {
+      await connection.query(config.alterSQL)
+      console.log(`已创建唯一索引: ${config.indexName}`)
+    } catch (error) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        console.warn(`跳过索引 ${config.indexName}: 现有数据存在重复记录，请先清理重复数据`)
+      } else if (error.code !== 'ER_DUP_KEYNAME') {
+        throw error
+      }
+    }
+  }
+}
 
 const initDatabase = async () => {
+  const dbConfig = getDbConfig()
+  const dbName = getDbName()
+
   console.log('开始初始化数据库...')
-  console.log(`连接到: ${process.env.DB_HOST}:${process.env.DB_PORT}`)
-  console.log(`数据库: ${process.env.DB_NAME}`)
-  console.log(`用户: ${process.env.DB_USER}`)
+  console.log(`连接到: ${dbConfig.host}:${dbConfig.port}`)
+  console.log(`数据库: ${dbName}`)
+  console.log(`用户: ${dbConfig.user}`)
   
   let connection
   try {
-    connection = await mysql.createConnection({
-      host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT || 3306,
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      multipleStatements: true
-    })
+    connection = await mysql.createConnection(
+      getDbServerConfig({
+        multipleStatements: true
+      })
+    )
     
     console.log('数据库连接成功!')
     
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME || 'cha_cha'}\` 
+    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` 
                            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`)
     console.log('数据库创建/确认成功!')
     
-    await connection.query(`USE \`${process.env.DB_NAME || 'cha_cha'}\``)
+    await connection.query(`USE \`${dbName}\``)
     
     const sqlPath = path.join(__dirname, 'schema.sql')
     const sql = fs.readFileSync(sqlPath, 'utf8')
@@ -43,6 +84,8 @@ const initDatabase = async () => {
         }
       }
     }
+
+    await ensureUniqueIndexes(connection, dbName)
     
     await connection.end()
     console.log('数据库初始化完成!')

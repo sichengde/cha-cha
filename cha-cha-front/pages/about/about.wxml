@@ -9,12 +9,6 @@
     </view>
   </view>
 
-  <view class="about-header">
-    <image class="app-logo" src="/assets/images/logo.svg" mode="aspectFit"></image>
-    <text class="app-name">查查助手</text>
-    <text class="app-version">版本 1.0.0</text>
-  </view>
-
   <view class="about-section">
     <view class="section-title">关于我们</view>
     <view class="section-content">

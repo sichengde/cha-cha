@@ -1,5 +1,5 @@
 var util = require('./util')
-var BASE_URL = 'http://192.168.1.14:3000'
+var BASE_URL = require('./config').BASE_URL
 
 function request(options) {
   var url = options.url
@@ -95,8 +95,22 @@ function downloadFile(url) {
         if (res.statusCode === 200) {
           resolve(res.tempFilePath)
         } else {
-          util.showToast('下载失败')
-          reject(new Error('下载失败'))
+          var message = '下载失败'
+          try {
+            if (res.tempFilePath) {
+              var fs = wx.getFileSystemManager()
+              var content = fs.readFileSync(res.tempFilePath, 'utf8')
+              if (content) {
+                var parsed = JSON.parse(content)
+                if (parsed && parsed.message) {
+                  message = parsed.message
+                }
+              }
+            }
+          } catch (e) {}
+
+          util.showToast(message)
+          reject(new Error(message))
         }
       },
       fail: function(err) {
@@ -118,6 +132,8 @@ var queryApi = {
   create: function(data) { return request({ url: '/api/queries', method: 'POST', data: data }) },
   getMyList: function(params) { return request({ url: '/api/queries/my', data: params }) },
   getDetail: function(id) { return request({ url: '/api/queries/' + id }) },
+  getShareInfo: function(id) { return request({ url: '/api/queries/' + id + '/share' }) },
+  downloadQrCode: function(id) { return downloadFile('/api/queries/' + id + '/qrcode') },
   update: function(id, data) { return request({ url: '/api/queries/' + id, method: 'PUT', data: data }) },
   delete: function(id) { return request({ url: '/api/queries/' + id, method: 'DELETE' }) }
 }
@@ -137,14 +153,15 @@ var dataApi = {
 var statsApi = {
   get: function(id) { return request({ url: '/api/stats/' + id }) },
   getAll: function(id, params) { return request({ url: '/api/stats/' + id + '/all', data: params }) },
+  getQueried: function(id, params) { return request({ url: '/api/stats/' + id + '/queried', data: params }) },
   getUnqueried: function(id, params) { return request({ url: '/api/stats/' + id + '/unqueried', data: params }) },
+  getSigned: function(id, params) { return request({ url: '/api/stats/' + id + '/signed', data: params }) },
   getUnsigned: function(id, params) { return request({ url: '/api/stats/' + id + '/unsigned', data: params }) }
 }
 
 var fileApi = {
   upload: uploadFile,
-  exportData: function(id) { return downloadFile('/api/files/export/' + id) },
-  exportSignatures: function(id) { return downloadFile('/api/files/export-signatures/' + id) }
+  exportData: function(id) { return downloadFile('/api/files/export/' + id) }
 }
 
 module.exports = {

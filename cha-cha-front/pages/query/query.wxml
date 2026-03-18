@@ -1,15 +1,20 @@
 <view class="query-container">
   <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
     <view class="navbar-content">
-      <view class="navbar-left" bindtap="goBack">
-        <text class="back-arrow">‹</text>
+      <view class="navbar-left" bindtap="goHome">
+        <image class="home-icon" src="/assets/icons/home.svg" mode="aspectFit"></image>
       </view>
-      <view class="navbar-title">{{queryInfo.name || '查询'}}</view>
+      <view class="navbar-title">信息查询</view>
       <view class="navbar-right"></view>
     </view>
   </view>
 
   <view class="content">
+    <view wx:if="{{queryInfo && queryInfo.name}}" class="file-name-card">
+      <text class="file-name-label">文件名称</text>
+      <text class="file-name-text">{{queryInfo.name}}</text>
+    </view>
+
     <view wx:if="{{loading}}" class="loading-box">
       <text>加载中...</text>
     </view>
@@ -52,24 +57,31 @@
       <view class="result-content">
         <view wx:for="{{queryResult}}" wx:key="label" class="result-item">
           <view class="result-label">{{item.label}}</view>
-          <view class="result-value {{item.modified ? 'modified' : ''}}">{{item.value}}</view>
+          <view
+            class="result-value-wrap"
+            bindtap="onResultValueTap"
+            data-index="{{index}}"
+          >
+            <input
+              wx:if="{{item.editable && item.editing}}"
+              class="result-input"
+              value="{{item.editValue}}"
+              bindinput="onInlineEditInput"
+              bindblur="finishInlineEdit"
+              bindconfirm="finishInlineEdit"
+              data-index="{{index}}"
+              confirm-type="done"
+              focus
+            />
+            <view wx:else class="result-value {{item.modified || item.changed ? 'modified' : ''}} {{item.editable ? 'editable' : ''}}">
+              {{item.value || (item.editable ? '点击输入' : '-')}}
+            </view>
+          </view>
         </view>
       </view>
 
-      <view wx:if="{{allowModify && modifiableFields.length > 0}}" class="modify-box">
-        <view class="modify-title">修改信息</view>
-        <view wx:for="{{modifiableFields}}" wx:key="label" class="modify-item">
-          <view class="modify-label">{{item.label}}</view>
-          <input 
-            class="modify-input" 
-            placeholder="当前值：{{item.value}}" 
-            value="{{item.newValue}}" 
-            bindinput="onModifyInput" 
-            data-index="{{index}}"
-          />
-        </view>
-        <button class="modify-btn" bindtap="submitModify">提交修改</button>
-      </view>
+      <view wx:if="{{allowModify}}" class="inline-edit-tip">点击右侧内容可直接编辑，编辑后点击保存修改</view>
+      <button wx:if="{{allowModify}}" class="modify-btn {{!hasPendingChanges ? 'disabled' : ''}}" disabled="{{!hasPendingChanges}}" bindtap="saveInlineChanges">保存修改</button>
 
       <view wx:if="{{enableSign && !signed}}" class="sign-box">
         <view class="sign-title">签收确认</view>

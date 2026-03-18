@@ -3,6 +3,11 @@ var queryApi = require('../../utils/api').queryApi
 var util = require('../../utils/util')
 var getStatusText = util.getStatusText
 var getStatusClass = util.getStatusClass
+var formatBeijingDateTime = util.formatBeijingDateTime
+var getQueryPath = util.getQueryPath
+var openShareMenu = util.showQueryShareActionSheet
+var showQrPreviewFromTempFile = util.showQrPreviewFromTempFile
+var hideQrPreviewState = util.hideQrPreview
 
 Page({
   data: {
@@ -14,7 +19,12 @@ Page({
     loading: false,
     page: 1,
     pageSize: 10,
-    total: 0
+    total: 0,
+    showShareGuide: false,
+    shareQueryId: '',
+    shareQueryName: '',
+    showQrPreview: false,
+    qrPreviewPath: ''
   },
 
   onLoad: function() {
@@ -54,10 +64,23 @@ Page({
     }).then(function(data) {
       if (data.success) {
         var processedList = data.data.list.map(function(query) {
+          var totalCount = Number(query.total_count || query.data_count || 0)
+          var queryCount = Number(query.query_count || query.queryCount || 0)
+          var signedCount = Number(query.sign_count || query.signedCount || 0)
+          if (isNaN(totalCount)) totalCount = 0
+          if (isNaN(queryCount)) queryCount = 0
+          if (isNaN(signedCount)) signedCount = 0
+          var unqueriedCount = totalCount - queryCount
+          if (unqueriedCount < 0) unqueriedCount = 0
+
           return Object.assign({}, query, {
             statusText: getStatusText(query.status),
             statusClass: getStatusClass(query.status).replace('tag-', ''),
-            totalCount: query.data_count || 0
+            totalCount: totalCount,
+            queryCount: queryCount,
+            unqueriedCount: unqueriedCount,
+            signedCount: signedCount,
+            createTime: formatBeijingDateTime(query.created_at || query.create_time) || '--'
           })
         })
 
@@ -98,7 +121,7 @@ Page({
 
     if (searchText) {
       filtered = filtered.filter(function(q) {
-        return q.name.toLowerCase().indexOf(searchText.toLowerCase()) !== -1
+        return (q.name || '').toLowerCase().indexOf(searchText.toLowerCase()) !== -1
       })
     }
 
@@ -119,34 +142,42 @@ Page({
   },
 
   shareQuery: function(e) {
+    var that = this
     var id = e.currentTarget.dataset.id
+    var name = e.currentTarget.dataset.name || ''
     
-    wx.showActionSheet({
-      itemList: ['转发给好友', '生成二维码', '复制链接'],
-      success: function(res) {
-        if (res.tapIndex === 0) {
-          wx.showShareMenu({
-            withShareTicket: true,
-            menus: ['shareAppMessage', 'shareTimeline']
-          })
-        } else if (res.tapIndex === 1) {
-          wx.showToast({
-            title: '二维码已保存',
-            icon: 'success'
-          })
-        } else if (res.tapIndex === 2) {
-          wx.setClipboardData({
-            data: 'pages/query/query?id=' + id,
-            success: function() {
-              wx.showToast({
-                title: '链接已复制',
-                icon: 'success'
-              })
-            }
-          })
-        }
-      }
+    openShareMenu(function() {
+      that.openShareGuide(id, name)
+    }, function() {
+      that.generateQueryQrCode(id)
     })
+  },
+
+  openShareGuide: function(queryId, queryName) {
+    this.setData({
+      showShareGuide: true,
+      shareQueryId: queryId,
+      shareQueryName: queryName || ''
+    })
+  },
+
+  hideShareGuide: function() {
+    this.setData({ showShareGuide: false })
+  },
+
+  generateQueryQrCode: function(queryId) {
+    var that = this
+    queryApi.downloadQrCode(queryId).then(function(tempFilePath) {
+      showQrPreviewFromTempFile(that, tempFilePath)
+    }).catch(function() {})
+  },
+
+  hideQrPreview: function() {
+    hideQrPreviewState(this)
+  },
+
+  onShareButtonTap: function() {
+    this.hideShareGuide()
   },
 
   editQuery: function(e) {
@@ -184,6 +215,14 @@ Page({
   },
 
   onShareAppMessage: function() {
+    var queryId = this.data.shareQueryId
+    if (queryId) {
+      return {
+        title: this.data.shareQueryName || '查查助手',
+        path: getQueryPath(queryId)
+      }
+    }
+
     return {
       title: '查查助手 - 轻量化信息查询工具',
       path: '/pages/index/index'

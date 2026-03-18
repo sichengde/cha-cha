@@ -3,6 +3,11 @@ var api = require('../../utils/api')
 var queryApi = api.queryApi
 var statsApi = api.statsApi
 var fileApi = api.fileApi
+var util = require('../../utils/util')
+var getQueryPath = util.getQueryPath
+var openShareMenu = util.showQueryShareActionSheet
+var showQrPreviewFromTempFile = util.showQrPreviewFromTempFile
+var hideQrPreviewState = util.hideQrPreview
 
 Page({
   data: {
@@ -29,7 +34,12 @@ Page({
     page: 1,
     pageSize: 50,
     hasMore: true,
-    total: 0
+    total: 0,
+    showShareGuide: false,
+    shareQueryId: '',
+    shareQueryName: '',
+    showQrPreview: false,
+    qrPreviewPath: ''
   },
 
   onLoad: function(options) {
@@ -41,6 +51,12 @@ Page({
     if (options.id) {
       this.setData({ queryId: options.id })
       this.loadQueryInfo(options.id)
+    }
+  },
+
+  onShow: function() {
+    if (this.data.queryId && this.data.queryInfo && this.data.queryInfo.id) {
+      this.loadQueryInfo(this.data.queryId)
     }
   },
 
@@ -104,11 +120,16 @@ Page({
     var apiCall
     switch (currentFilter) {
       case 'all':
-      case 'queried':
         apiCall = statsApi.getAll(queryId, { page: page, pageSize: pageSize })
+        break
+      case 'queried':
+        apiCall = statsApi.getQueried(queryId, { page: page, pageSize: pageSize })
         break
       case 'unqueried':
         apiCall = statsApi.getUnqueried(queryId, { page: page, pageSize: pageSize })
+        break
+      case 'signed':
+        apiCall = statsApi.getSigned(queryId, { page: page, pageSize: pageSize })
         break
       case 'unsigned':
         apiCall = statsApi.getUnsigned(queryId, { page: page, pageSize: pageSize })
@@ -120,9 +141,13 @@ Page({
 
     apiCall.then(function(data) {
       if (data.success) {
+        var tableHeaders = that.data.tableHeaders
         var newRows = data.data.list.map(function(row) {
           return {
-            data: Object.values(row),
+            data: tableHeaders.map(function(header) {
+              var value = row[header]
+              return value === undefined || value === null ? '' : value
+            }),
             queried: row._queried,
             signed: row._signed
           }
@@ -156,36 +181,128 @@ Page({
   },
 
   exportData: function() {
+    var that = this
     var queryId = this.data.queryId
     wx.showLoading({ title: '导出中...' })
     
-    fileApi.exportData(queryId).then(function() {
+    fileApi.exportData(queryId).then(function(tempFilePath) {
       wx.hideLoading()
-      wx.showToast({ title: '导出成功', icon: 'success' })
+      that.handleExportedFile(tempFilePath)
     }).catch(function() {
       wx.hideLoading()
       wx.showToast({ title: '导出失败', icon: 'none' })
     })
   },
 
-  exportSignatures: function() {
+  shareQuery: function() {
+    var that = this
     var queryId = this.data.queryId
-    var settings = this.data.queryInfo.settings || {}
-    
-    if (!settings.enableSign) {
-      wx.showToast({ title: '未开启签收功能', icon: 'none' })
+    var queryName = (this.data.queryInfo && this.data.queryInfo.name) || ''
+
+    if (!queryId) {
+      wx.showToast({ title: '查询不存在', icon: 'none' })
       return
     }
 
-    wx.showLoading({ title: '导出中...' })
-    
-    fileApi.exportSignatures(queryId).then(function() {
-      wx.hideLoading()
-      wx.showToast({ title: '导出成功', icon: 'success' })
-    }).catch(function() {
-      wx.hideLoading()
-      wx.showToast({ title: '导出失败', icon: 'none' })
+    openShareMenu(function() {
+      that.openShareGuide(queryId, queryName)
+    }, function() {
+      that.generateQueryQrCode(queryId)
     })
+  },
+
+  openShareGuide: function(queryId, queryName) {
+    this.setData({
+      showShareGuide: true,
+      shareQueryId: queryId,
+      shareQueryName: queryName || ''
+    })
+  },
+
+  hideShareGuide: function() {
+    this.setData({ showShareGuide: false })
+  },
+
+  onShareButtonTap: function() {
+    this.hideShareGuide()
+  },
+
+  generateQueryQrCode: function(queryId) {
+    var that = this
+    queryApi.downloadQrCode(queryId).then(function(tempFilePath) {
+      showQrPreviewFromTempFile(that, tempFilePath)
+    }).catch(function() {})
+  },
+
+  hideQrPreview: function() {
+    hideQrPreviewState(this)
+  },
+
+  handleExportedFile: function(tempFilePath) {
+    var that = this
+    if (!tempFilePath) {
+      wx.showToast({ title: '导出文件为空', icon: 'none' })
+      return
+    }
+
+    wx.saveFile({
+      tempFilePath: tempFilePath,
+      success: function(res) {
+        that.showExportActionSheet(res.savedFilePath || tempFilePath)
+      },
+      fail: function() {
+        that.showExportActionSheet(tempFilePath)
+      }
+    })
+  },
+
+  showExportActionSheet: function(filePath) {
+    var that = this
+    wx.showActionSheet({
+      itemList: ['直接打开', '转发给微信好友'],
+      success: function(res) {
+        if (res.tapIndex === 0) {
+          that.openExportFile(filePath, false)
+        } else if (res.tapIndex === 1) {
+          that.shareExportFile(filePath)
+        }
+      }
+    })
+  },
+
+  openExportFile: function(filePath, fromShareGuide) {
+    wx.openDocument({
+      filePath: filePath,
+      fileType: 'xlsx',
+      showMenu: true,
+      success: function() {
+        if (fromShareGuide) {
+          wx.showToast({ title: '请在右上角菜单转发', icon: 'none' })
+        }
+      },
+      fail: function() {
+        wx.showToast({ title: '打开文件失败', icon: 'none' })
+      }
+    })
+  },
+
+  shareExportFile: function(filePath) {
+    var that = this
+    if (typeof wx.shareFileMessage === 'function') {
+      wx.shareFileMessage({
+        filePath: filePath,
+        fileName: (this.data.queryInfo.name || '查询数据') + '.xlsx',
+        success: function() {
+          wx.showToast({ title: '转发成功', icon: 'success' })
+        },
+        fail: function() {
+          that.openExportFile(filePath, true)
+        }
+      })
+      return
+    }
+
+    that.openExportFile(filePath, true)
   },
 
   showFilter: function() {
@@ -254,9 +371,11 @@ Page({
   },
 
   onShareAppMessage: function() {
+    var queryId = this.data.shareQueryId || this.data.queryId
+    var title = this.data.shareQueryName || (this.data.queryInfo && this.data.queryInfo.name) || '查查助手'
     return {
-      title: this.data.queryInfo.name,
-      path: '/pages/query/query?id=' + this.data.queryId
+      title: title,
+      path: queryId ? getQueryPath(queryId) : '/pages/index/index'
     }
   }
 })

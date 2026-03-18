@@ -70,7 +70,9 @@
 
 .table-scroll {
   width: 100%;
-  height: 700rpx;
+  height: calc(100vh - 430rpx);
+  min-height: 420rpx;
+  max-height: 900rpx;
   background: #fff;
   border-radius: 12rpx;
   overflow: hidden;

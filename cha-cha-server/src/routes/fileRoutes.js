@@ -41,6 +41,5 @@ const upload = multer({
 
 router.post('/upload', authMiddleware, upload.single('file'), fileController.uploadExcel)
 router.get('/export/:id', authMiddleware, fileController.exportData)
-router.get('/export-signatures/:id', authMiddleware, fileController.exportSignatures)
 
 module.exports = router

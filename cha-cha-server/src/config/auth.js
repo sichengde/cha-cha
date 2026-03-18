@@ -1,14 +1,26 @@
 const jwt = require('jsonwebtoken')
+const { readEnvString } = require('./env')
+
+const getJwtSecret = () => readEnvString('JWT_SECRET', '')
 
 const generateToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+  const secret = getJwtSecret()
+  if (!secret) {
+    throw new Error('未配置 JWT_SECRET')
+  }
+
+  return jwt.sign(payload, secret, {
+    expiresIn: readEnvString('JWT_EXPIRES_IN', '7d')
   })
 }
 
 const verifyToken = (token) => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET)
+    const secret = getJwtSecret()
+    if (!secret) {
+      return null
+    }
+    return jwt.verify(token, secret)
   } catch (error) {
     return null
   }

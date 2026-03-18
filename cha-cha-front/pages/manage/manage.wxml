@@ -63,16 +63,6 @@
       </view>
       <text class="action-arrow">›</text>
     </view>
-    <view class="action-item" bindtap="exportSignatures">
-      <view class="action-icon signature">
-        <image class="icon-svg" src="/assets/icons/sign.svg" mode="aspectFit"></image>
-      </view>
-      <view class="action-text">
-        <text class="action-title">导出签名</text>
-        <text class="action-desc">导出签收记录和签名图片</text>
-      </view>
-      <text class="action-arrow">›</text>
-    </view>
   </view>
 
   <view class="data-card">
@@ -85,16 +75,20 @@
     </view>
     <scroll-view class="data-table" scroll-x scroll-y bindscrolltolower="loadMore">
       <view class="table-row header">
-        <view class="table-cell" wx:for="{{tableHeaders}}" wx:key="index">{{item}}</view>
-        <view class="table-cell">状态</view>
-        <view class="table-cell">签收</view>
+        <view class="table-cell" wx:for="{{tableHeaders}}" wx:key="index">
+          <text class="cell-text">{{item}}</text>
+        </view>
+        <view class="table-cell status-cell"><text class="cell-text">状态</text></view>
+        <view class="table-cell status-cell"><text class="cell-text">签收</text></view>
       </view>
       <view class="table-row" wx:for="{{filteredRows}}" wx:key="index">
-        <view class="table-cell" wx:for="{{item.data}}" wx:key="index">{{item}}</view>
-        <view class="table-cell">
+        <view class="table-cell" wx:for="{{item.data}}" wx:key="index" wx:for-item="cellValue">
+          <text class="cell-text">{{cellValue}}</text>
+        </view>
+        <view class="table-cell status-cell">
           <text class="status-tag {{item.queried ? 'queried' : 'unqueried'}}">{{item.queried ? '已查' : '未查'}}</text>
         </view>
-        <view class="table-cell">
+        <view class="table-cell status-cell">
           <text class="status-tag {{item.signed ? 'signed' : 'unsigned'}}">{{item.signed ? '已签' : '未签'}}</text>
         </view>
       </view>
@@ -126,6 +120,25 @@
   <view class="bottom-space"></view>
 
   <view class="bottom-bar">
-    <button class="btn-share" open-type="share">分享查询</button>
+    <button class="btn-share" bindtap="shareQuery">分享查询</button>
+  </view>
+
+  <view class="share-modal" wx:if="{{showShareGuide}}">
+    <view class="modal-mask" bindtap="hideShareGuide"></view>
+    <view class="modal-panel">
+      <view class="modal-title">转发查询</view>
+      <view class="modal-desc">点击下方按钮，直接转发给微信好友</view>
+      <button class="modal-share-btn" open-type="share" bindtap="onShareButtonTap">转发给好友</button>
+      <button class="modal-cancel-btn" bindtap="hideShareGuide">取消</button>
+    </view>
+  </view>
+
+  <view class="qr-modal" wx:if="{{showQrPreview}}">
+    <view class="modal-mask" bindtap="hideQrPreview"></view>
+    <view class="qr-panel">
+      <view class="qr-title">查询二维码</view>
+      <image class="qr-image" src="{{qrPreviewPath}}" mode="widthFix" show-menu-by-longpress="{{true}}"></image>
+      <view class="qr-tip">长按二维码图片可手动保存</view>
+    </view>
   </view>
 </view>

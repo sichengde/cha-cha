@@ -4,7 +4,7 @@
       <view class="navbar-left" bindtap="goBack">
         <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
       </view>
-      <view class="navbar-title">创建查询</view>
+      <view class="navbar-title">{{pageTitle}}</view>
       <view class="navbar-right"></view>
     </view>
   </view>
@@ -28,11 +28,27 @@
 
     <view class="section-title">高级设置</view>
 
-    <view class="setting-item">
+    <view class="setting-item {{allowModify ? 'no-bottom' : ''}}">
       <text class="setting-label">允许修改信息</text>
       <view class="setting-right">
-        <text class="setting-value">{{allowModify ? '开启' : '关闭'}}</text>
+        <text class="setting-value">{{allowModify ? modifiableText : '关闭'}}</text>
         <switch checked="{{allowModify}}" bindchange="toggleAllowModify" color="#07c160" />
+      </view>
+    </view>
+    <view class="modifiable-list" wx:if="{{allowModify}}">
+      <view class="modifiable-tip">仅可选择“非查询条件”的字段作为可编辑字段</view>
+      <view wx:if="{{modifiableColumns.length === 0}}" class="modifiable-empty">当前所有列都已作为查询条件，暂无可修改字段</view>
+      <view
+        wx:for="{{modifiableColumns}}"
+        wx:key="name"
+        class="modifiable-item"
+        bindtap="toggleModifiableColumn"
+        data-index="{{index}}"
+      >
+        <view class="checkbox {{item.selected ? 'checked' : ''}}">
+          <image class="check-icon" src="/assets/icons/check.svg" mode="aspectFit" wx:if="{{item.selected}}"></image>
+        </view>
+        <text class="modifiable-name">{{item.name}}</text>
       </view>
     </view>
 
@@ -64,7 +80,7 @@
   </scroll-view>
 
   <view class="bottom-bar">
-    <button class="btn-save" bindtap="saveAndShare">保存，并去转发</button>
+    <button class="btn-save" bindtap="saveAndShare">{{saveButtonText}}</button>
   </view>
 
   <view class="time-modal" wx:if="{{showTimeModal}}">
@@ -105,8 +121,8 @@
   </view>
 
   <view class="share-modal" wx:if="{{showShareModal}}">
-    <view class="modal-mask"></view>
-    <view class="modal-content">
+    <view class="modal-mask" bindtap="onShareModalMaskTap"></view>
+    <view class="modal-content" catchtap="onShareModalTap">
       <view class="success-icon">
         <image class="check-icon" src="/assets/icons/check.svg" mode="aspectFit"></image>
       </view>
@@ -114,8 +130,17 @@
       <view class="success-desc">转发分享给大家查询吧</view>
       <view class="share-btns">
         <button class="btn-share" open-type="share">转发到微信</button>
-        <button class="btn-done" bindtap="hideShareModal">完成</button>
+        <button class="btn-secondary" bindtap="generateCreatedQueryQrCode">生成二维码</button>
       </view>
+    </view>
+  </view>
+
+  <view class="qr-preview-modal" wx:if="{{showQrPreview}}">
+    <view class="modal-mask" bindtap="onQrModalMaskTap"></view>
+    <view class="qr-preview-content" catchtap="onQrModalTap">
+      <view class="qr-preview-title">查询二维码</view>
+      <image class="qr-preview-image" src="{{qrPreviewPath}}" mode="widthFix" show-menu-by-longpress="{{true}}" bindtap="previewQrImage"></image>
+      <view class="qr-preview-tip">长按二维码图片可手动保存</view>
     </view>
   </view>
 </view>

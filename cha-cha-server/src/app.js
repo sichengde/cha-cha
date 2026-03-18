@@ -1,9 +1,9 @@
-require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
 const path = require('path')
+const { readEnvInt } = require('./config/env')
 
 const userRoutes = require('./routes/userRoutes')
 const queryRoutes = require('./routes/queryRoutes')
@@ -83,7 +83,7 @@ app.use(function(req, res) {
   res.status(404).json({ success: false, message: '接口不存在' })
 })
 
-const PORT = process.env.PORT || 3000
+const PORT = readEnvInt('PORT', 3000)
 
 async function startServer() {
   try {

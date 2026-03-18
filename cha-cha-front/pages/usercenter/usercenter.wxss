@@ -52,6 +52,28 @@
   position: relative;
 }
 
+.menu-share-item {
+  position: relative;
+}
+
+.share-overlay-btn {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  opacity: 0;
+  z-index: 2;
+}
+
+.share-overlay-btn::after {
+  border: none;
+}
+
 .menu-item:not(:last-child)::after {
   content: '';
   position: absolute;

@@ -1,6 +1,7 @@
-require('dotenv').config()
+const { readEnvBoolean } = require('./env')
+const { getDbConfig } = require('./dbConfig')
 
-const USE_MEMORY_DB = process.env.USE_MEMORY_DB === 'true'
+const USE_MEMORY_DB = readEnvBoolean('USE_MEMORY_DB', false)
 
 if (USE_MEMORY_DB) {
   const memoryDb = require('./database.memory')
@@ -9,19 +10,14 @@ if (USE_MEMORY_DB) {
   const mysql = require('mysql2/promise')
 
   const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'cha_cha',
+    ...getDbConfig(),
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
     timezone: '+08:00',
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000,
-    connectTimeout: 10000,
-    acquireTimeout: 10000
+    connectTimeout: 10000
   })
 
   const query = async (sql, params = []) => {

@@ -1,5 +1,3 @@
-var app = getApp()
-
 Page({
   data: {
     statusBarHeight: 44
@@ -16,5 +14,14 @@ Page({
     wx.navigateTo({
       url: '/pages/about/about'
     })
+  },
+
+  onShareButtonTap: function() {},
+
+  onShareAppMessage: function() {
+    return {
+      title: '查查助手 - 轻量化信息查询工具',
+      path: '/pages/index/index'
+    }
   }
 })

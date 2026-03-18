@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS query_records (
   INDEX idx_query_page_id (query_page_id),
   INDEX idx_query_data_id (query_data_id),
   INDEX idx_openid (openid),
+  UNIQUE KEY uk_query_record_user (query_page_id, query_data_id, openid),
   FOREIGN KEY (query_page_id) REFERENCES query_pages(id) ON DELETE CASCADE,
   FOREIGN KEY (query_data_id) REFERENCES query_data(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='查询记录表';
@@ -81,6 +82,7 @@ CREATE TABLE IF NOT EXISTS signatures (
   signed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '签收时间',
   INDEX idx_query_page_id (query_page_id),
   INDEX idx_query_data_id (query_data_id),
+  UNIQUE KEY uk_signature_page_data (query_page_id, query_data_id),
   FOREIGN KEY (query_page_id) REFERENCES query_pages(id) ON DELETE CASCADE,
   FOREIGN KEY (query_data_id) REFERENCES query_data(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='签收记录表';
@@ -103,7 +105,7 @@ CREATE TABLE IF NOT EXISTS export_records (
   query_page_id VARCHAR(36) COMMENT '导出的查询页面ID',
   file_name VARCHAR(200) COMMENT '导出文件名',
   file_path VARCHAR(500) COMMENT '导出文件路径',
-  export_type ENUM('data', 'signature') DEFAULT 'data' COMMENT '导出类型：数据导出/签收记录导出',
+  export_type ENUM('data') DEFAULT 'data' COMMENT '导出类型：数据导出',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '导出时间',
   INDEX idx_user_id (user_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

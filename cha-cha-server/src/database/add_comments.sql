@@ -76,7 +76,7 @@ ALTER TABLE export_records
   MODIFY COLUMN query_page_id VARCHAR(36) COMMENT '导出的查询页面ID',
   MODIFY COLUMN file_name VARCHAR(200) COMMENT '导出文件名',
   MODIFY COLUMN file_path VARCHAR(500) COMMENT '导出文件路径',
-  MODIFY COLUMN export_type ENUM('data', 'signature') DEFAULT 'data' COMMENT '导出类型：数据导出/签收记录导出',
+  MODIFY COLUMN export_type ENUM('data') DEFAULT 'data' COMMENT '导出类型：数据导出',
   MODIFY COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '导出时间';
 
 ALTER TABLE favorites COMMENT '收藏表';

@@ -1,14 +1,8 @@
 const mysql = require('mysql2/promise')
-require('dotenv').config()
+const { getDbConfig } = require('../src/config/dbConfig')
 
 async function runMigration() {
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'cha_cha'
-  })
+  const connection = await mysql.createConnection(getDbConfig())
 
   try {
     console.log('开始执行数据库迁移...')

@@ -1,6 +1,7 @@
 var app = getApp()
 var queryApi = require('../../utils/api').queryApi
 var fileApi = require('../../utils/api').fileApi
+var formatBeijingDateTime = require('../../utils/util').formatBeijingDateTime
 
 Page({
   data: {
@@ -56,8 +57,13 @@ Page({
       pageSize: 5
     }).then(function(data) {
       if (data.success) {
+        var recentQueries = (data.data.list || []).map(function(item) {
+          return Object.assign({}, item, {
+            displayCreatedAt: formatBeijingDateTime(item.created_at || item.create_time) || '刚刚'
+          })
+        })
         that.setData({
-          recentQueries: data.data.list || [],
+          recentQueries: recentQueries,
           loading: false
         })
       } else {
@@ -108,7 +114,7 @@ Page({
           headers: data.headers,
           rows: data.data,
           allRows: data.allRows,
-          headerRowIndex: 0,
+          headerRowIndex: data.headerRowIndex || 0,
           rowCount: data.rowCount
         }
 

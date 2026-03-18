@@ -1,6 +1,7 @@
 var app = getApp()
 var api = require('../../../utils/api')
 var statsApi = api.statsApi
+var queryApi = api.queryApi
 
 Page({
   data: {
@@ -40,9 +41,15 @@ Page({
     var that = this
     this.setData({ loading: true })
 
-    statsApi.get(queryId).then(function(data) {
-      if (data.success) {
-        var summary = data.data.summary
+    Promise.all([
+      statsApi.get(queryId),
+      queryApi.getDetail(queryId)
+    ]).then(function(results) {
+      var statsData = results[0]
+      var queryData = results[1]
+
+      if (statsData.success) {
+        var summary = statsData.data.summary
         that.setData({
           stats: {
             total: summary.totalData,
@@ -54,6 +61,13 @@ Page({
           }
         })
       }
+
+      if (queryData.success) {
+        that.setData({
+          queryInfo: queryData.data
+        })
+      }
+
       that.setData({ loading: false })
       that.loadFilteredDetails()
     }).catch(function() {
@@ -68,10 +82,13 @@ Page({
     
     var apiCall
     switch (currentTab) {
-      case 'unqueried':
-        apiCall = statsApi.getUnqueried(queryId, { page: 1, pageSize: 100 })
+      case 'all':
+        apiCall = statsApi.getAll(queryId, { page: 1, pageSize: 100 })
         break
       case 'queried':
+        apiCall = statsApi.getQueried(queryId, { page: 1, pageSize: 100 })
+        break
+      case 'unqueried':
         apiCall = statsApi.getUnqueried(queryId, { page: 1, pageSize: 100 })
         break
       default:
@@ -83,18 +100,27 @@ Page({
       if (data.success) {
         that.setData({
           filteredDetails: data.data.list.map(function(row, index) {
-            var keys = Object.keys(row)
+            var keys = Object.keys(row).filter(function(key) {
+              return key.charAt(0) !== '_'
+            })
+            var nameKey = keys[0]
+            var idKey = keys[1] || keys[0]
+
             return {
-              name: row[keys[0]] || '用户' + (index + 1),
-              id: row[keys[1]] || 'ID' + (index + 1),
-              queried: currentTab === 'queried',
-              signed: false,
-              queryTime: '',
+              name: row[nameKey] || '用户' + (index + 1),
+              id: row[idKey] || 'ID' + (index + 1),
+              queried: !!row._queried,
+              signed: !!row._signed,
+              queryTime: row._queryTime || '',
               modified: false
             }
           })
         })
+      } else {
+        that.setData({ filteredDetails: [] })
       }
+    }).catch(function() {
+      that.setData({ filteredDetails: [] })
     })
   },
 

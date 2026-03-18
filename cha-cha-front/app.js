@@ -1,11 +1,12 @@
 var api = require('./utils/api')
 var userApi = api.userApi
+var BASE_URL = require('./utils/config').BASE_URL
 
 App({
   globalData: {
     userInfo: null,
     isLoggedIn: false,
-    baseUrl: 'http://10.3.4.59:3000',
+    baseUrl: BASE_URL,
     querySettings: null,
     loginPromise: null
   },
@@ -39,9 +40,10 @@ App({
       wx.login({
         success: function(res) {
           if (res.code) {
-            var openid = 'wx_' + res.code + '_' + Date.now()
+            var openid = that.getOrCreateMockOpenid()
             
             userApi.login({
+              login_code: res.code,
               openid: openid,
               nickname: '微信用户',
               avatar_url: ''
@@ -82,6 +84,18 @@ App({
     })
     
     return this.globalData.loginPromise
+  },
+
+  getOrCreateMockOpenid: function() {
+    var cachedOpenid = wx.getStorageSync('mock_openid')
+    if (cachedOpenid) {
+      return cachedOpenid
+    }
+
+    var randomPart = Math.random().toString(36).slice(2, 12)
+    var openid = 'mock_' + Date.now() + '_' + randomPart
+    wx.setStorageSync('mock_openid', openid)
+    return openid
   },
 
   ensureLogin: function() {

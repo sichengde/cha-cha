@@ -12,6 +12,7 @@ Page({
     queryError: '',
     resultData: [],
     modifiableFields: [],
+    hasPendingChanges: false,
     signatureImage: '',
     loading: false,
     queryDataId: null,
@@ -85,8 +86,12 @@ Page({
         console.log('conditions:', conditions)
         
         var queryConditions = conditions.map(function(idx) {
+          var matchedHeader = headers.find(function(h) {
+            return h.column_index === idx
+          }) || headers[idx]
+
           return {
-            label: headers[idx] ? headers[idx].column_name : '列' + idx,
+            label: matchedHeader ? matchedHeader.column_name : '列' + idx,
             value: ''
           }
         })
@@ -139,7 +144,13 @@ Page({
       return
     }
 
-    this.setData({ loading: true, queryError: '', queryResult: null })
+    this.setData({
+      loading: true,
+      queryError: '',
+      queryResult: null,
+      modifiableFields: [],
+      hasPendingChanges: false
+    })
 
     var conditions = {}
     queryConditions.forEach(function(c) {
@@ -149,10 +160,13 @@ Page({
     dataApi.query(queryId, conditions).then(function(data) {
       if (data.success) {
         var result = data.data
+        var decoratedResult = that.decorateQueryResult(result.resultData, result.allowModify, result.modifiableFields || [])
         that.setData({
-          queryResult: result.resultData,
+          queryResult: decoratedResult,
           queryDataId: result.queryDataId,
           allowModify: result.allowModify,
+          modifiableFields: result.modifiableFields || [],
+          hasPendingChanges: false,
           enableSign: result.enableSign,
           signType: result.signType,
           signed: result.signed,
@@ -161,14 +175,49 @@ Page({
       } else {
         that.setData({
           queryError: data.message || '查询失败',
+          modifiableFields: [],
+          hasPendingChanges: false,
           loading: false
         })
       }
-    }).catch(function() {
+    }).catch(function(err) {
       that.setData({
-        queryError: '查询失败',
+        queryError: err && err.message ? err.message : '查询失败',
+        modifiableFields: [],
+        hasPendingChanges: false,
         loading: false
       })
+    })
+  },
+
+  decorateQueryResult: function(resultData, allowModify, modifiableFields) {
+    var editableMap = {}
+    ;(modifiableFields || []).forEach(function(field) {
+      if (field && field.label) {
+        editableMap[field.label] = true
+      }
+    })
+
+    var hasEditableMap = Object.keys(editableMap).length > 0
+
+    return (resultData || []).map(function(item) {
+      var textValue = item && item.value !== undefined && item.value !== null ? String(item.value) : ''
+      var editable = false
+
+      if (allowModify) {
+        editable = hasEditableMap ? !!editableMap[item.label] : !!item.is_modifiable
+      }
+
+      return {
+        label: item.label,
+        value: textValue,
+        originalValue: textValue,
+        editValue: textValue,
+        editable: editable,
+        editing: false,
+        changed: false,
+        modified: !!item.modified
+      }
     })
   },
 
@@ -187,6 +236,7 @@ Page({
           return {
             label: header,
             value: mockResult[idx],
+            is_modifiable: queryInfo.settings.modifyColumns.indexOf(idx) > -1,
             modified: false
           }
         })
@@ -199,14 +249,19 @@ Page({
           }
         })
 
+        var decoratedResult = that.decorateQueryResult(resultData, true, modifiableFields)
+
         that.setData({
-          queryResult: resultData,
+          queryResult: decoratedResult,
+          allowModify: true,
           modifiableFields: modifiableFields,
+          hasPendingChanges: false,
           loading: false
         })
       } else {
         that.setData({
           queryError: '未找到匹配的数据，请检查查询条件',
+          hasPendingChanges: false,
           loading: false
         })
       }
@@ -234,74 +289,142 @@ Page({
     return null
   },
 
-  onModifyInput: function(e) {
+  onResultValueTap: function(e) {
     var index = e.currentTarget.dataset.index
-    var value = e.detail.value
-    var fields = this.data.modifiableFields.slice()
-    fields[index].newValue = value
-    this.setData({ modifiableFields: fields })
-  },
+    var queryResult = (this.data.queryResult || []).slice()
+    var target = queryResult[index]
 
-  submitModify: function() {
-    var that = this
-    var modifiableFields = this.data.modifiableFields
-    var queryDataId = this.data.queryDataId
-    var queryId = this.data.queryId
-    
-    if (queryId === 'example') {
-      this.submitExampleModify()
+    if (!this.data.allowModify || !target || !target.editable) {
       return
     }
 
-    var modifications = modifiableFields
-      .filter(function(f) { return f.newValue.trim() })
-      .map(function(f) {
+    for (var i = 0; i < queryResult.length; i++) {
+      var row = Object.assign({}, queryResult[i])
+      row.editing = (i === index)
+      row.editValue = row.value
+      queryResult[i] = row
+    }
+
+    this.setData({ queryResult: queryResult })
+  },
+
+  onInlineEditInput: function(e) {
+    var index = e.currentTarget.dataset.index
+    var value = e.detail.value
+    var queryResult = (this.data.queryResult || []).slice()
+    if (!queryResult[index]) return
+
+    var row = Object.assign({}, queryResult[index])
+    row.editValue = value
+    row.value = String(value)
+    row.changed = row.value !== row.originalValue
+    row.modified = row.modified || row.changed
+    queryResult[index] = row
+
+    var hasPendingChanges = queryResult.some(function(item) {
+      return !!(item && item.changed)
+    })
+
+    this.setData({
+      queryResult: queryResult,
+      hasPendingChanges: hasPendingChanges
+    })
+  },
+
+  finishInlineEdit: function(e) {
+    var index = e.currentTarget.dataset.index
+    var queryResult = (this.data.queryResult || []).slice()
+    if (!queryResult[index]) return
+
+    var row = Object.assign({}, queryResult[index])
+    var finalValue = row.editValue
+    if (finalValue === undefined || finalValue === null) {
+      finalValue = ''
+    }
+    finalValue = String(finalValue)
+
+    row.value = finalValue
+    row.editValue = finalValue
+    row.editing = false
+    row.changed = finalValue !== row.originalValue
+    row.modified = row.modified || row.changed
+    queryResult[index] = row
+
+    var hasPendingChanges = queryResult.some(function(item) {
+      return !!(item && item.changed)
+    })
+
+    this.setData({
+      queryResult: queryResult,
+      hasPendingChanges: hasPendingChanges
+    })
+  },
+
+  applyInlineChanges: function() {
+    var queryResult = (this.data.queryResult || []).map(function(item) {
+      var row = Object.assign({}, item)
+      if (row.changed) {
+        row.originalValue = row.value
+        row.modified = true
+        row.changed = false
+      }
+      row.editing = false
+      row.editValue = row.value
+      return row
+    })
+
+    this.setData({
+      queryResult: queryResult,
+      hasPendingChanges: false
+    })
+  },
+
+  saveInlineChanges: function() {
+    var that = this
+    var queryResult = this.data.queryResult || []
+    var queryId = this.data.queryId
+    var queryDataId = this.data.queryDataId
+
+    var modifications = queryResult
+      .filter(function(item) {
+        return item && item.editable && item.changed
+      })
+      .map(function(item) {
         return {
-          column: f.label,
-          newValue: f.newValue
+          column: item.label,
+          newValue: item.value
         }
       })
 
     if (modifications.length === 0) {
-      wx.showToast({ title: '请输入修改内容', icon: 'none' })
+      wx.showToast({ title: '请先修改内容', icon: 'none' })
       return
     }
 
+    if (queryId === 'example') {
+      this.applyInlineChanges()
+      wx.showToast({ title: '修改成功', icon: 'success' })
+      return
+    }
+
+    if (!queryDataId) {
+      wx.showToast({ title: '数据异常，请重新查询', icon: 'none' })
+      return
+    }
+
+    wx.showLoading({ title: '保存中...' })
     dataApi.modify(queryId, queryDataId, modifications).then(function(data) {
+      wx.hideLoading()
       if (data.success) {
+        that.applyInlineChanges()
         wx.showToast({ title: '修改成功', icon: 'success' })
-        that.doQuery()
       } else {
         wx.showToast({ title: data.message || '修改失败', icon: 'none' })
       }
     }).catch(function() {
+      wx.hideLoading()
       wx.showToast({ title: '修改失败', icon: 'none' })
     })
-  },
-
-  submitExampleModify: function() {
-    var modifiableFields = this.data.modifiableFields
-    var queryResult = this.data.queryResult
-    var queryInfo = this.data.queryInfo
-    var hasChange = false
-
-    modifiableFields.forEach(function(field, idx) {
-      if (field.newValue.trim()) {
-        var headerIndex = queryInfo.tableData.headers.indexOf(field.label)
-        if (headerIndex > -1) {
-          queryResult[headerIndex].value = field.newValue
-          queryResult[headerIndex].modified = true
-          hasChange = true
-        }
-      }
-    })
-
-    if (hasChange) {
-      this.setData({ queryResult: queryResult })
-      wx.showToast({ title: '修改成功', icon: 'success' })
-    } else {
-      wx.showToast({ title: '请输入修改内容', icon: 'none' })
-    }
   },
 
   showSignature: function() {
@@ -373,15 +496,16 @@ Page({
       queryError: '',
       resultData: [],
       modifiableFields: [],
+      hasPendingChanges: false,
       signatureImage: '',
       queryDataId: null,
       signed: false
     })
   },
 
-  goBack: function() {
-    wx.navigateBack({
-      delta: 1
+  goHome: function() {
+    wx.switchTab({
+      url: '/pages/index/index'
     })
   }
 })

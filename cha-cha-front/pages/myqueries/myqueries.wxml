@@ -26,11 +26,11 @@
       <view class="card-body">
         <view class="stat-row">
           <view class="stat-item">
-            <text class="stat-value">{{item.queryCount}}</text>
+            <text class="stat-value">{{item.queryCount || 0}}</text>
             <text class="stat-label">已查人数</text>
           </view>
           <view class="stat-item">
-            <text class="stat-value">{{item.totalCount - item.queryCount}}</text>
+            <text class="stat-value">{{item.unqueriedCount || 0}}</text>
             <text class="stat-label">未查人数</text>
           </view>
           <view class="stat-item">
@@ -42,7 +42,7 @@
       <view class="card-footer">
         <text class="create-time">创建于 {{item.createTime}}</text>
         <view class="actions">
-          <text class="action-btn" catchtap="shareQuery" data-id="{{item.id}}">分享</text>
+          <text class="action-btn" catchtap="shareQuery" data-id="{{item.id}}" data-name="{{item.name}}">分享</text>
           <text class="action-btn" catchtap="editQuery" data-id="{{item.id}}">编辑</text>
         </view>
       </view>
@@ -53,5 +53,24 @@
     <image class="empty-icon" src="/assets/images/empty.svg" mode="aspectFit"></image>
     <text class="empty-text">暂无查询记录</text>
     <text class="empty-tip">请在首页点击"创建查询"添加</text>
+  </view>
+
+  <view class="share-modal" wx:if="{{showShareGuide}}">
+    <view class="modal-mask" bindtap="hideShareGuide"></view>
+    <view class="modal-panel">
+      <view class="modal-title">转发查询</view>
+      <view class="modal-desc">点击下方按钮，直接转发给微信好友</view>
+      <button class="modal-share-btn" open-type="share" bindtap="onShareButtonTap">转发给好友</button>
+      <button class="modal-cancel-btn" bindtap="hideShareGuide">取消</button>
+    </view>
+  </view>
+
+  <view class="qr-modal" wx:if="{{showQrPreview}}">
+    <view class="modal-mask" bindtap="hideQrPreview"></view>
+    <view class="qr-panel">
+      <view class="qr-title">查询二维码</view>
+      <image class="qr-image" src="{{qrPreviewPath}}" mode="widthFix" show-menu-by-longpress="{{true}}"></image>
+      <view class="qr-tip">长按二维码图片可手动保存</view>
+    </view>
   </view>
 </view>

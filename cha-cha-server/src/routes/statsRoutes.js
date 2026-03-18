@@ -5,7 +5,9 @@ const { authMiddleware } = require('../config/auth')
 
 router.get('/:id', authMiddleware, statsController.getStatistics)
 router.get('/:id/all', authMiddleware, statsController.getAllDataList)
+router.get('/:id/queried', authMiddleware, statsController.getQueriedList)
 router.get('/:id/unqueried', authMiddleware, statsController.getUnqueriedList)
+router.get('/:id/signed', authMiddleware, statsController.getSignedList)
 router.get('/:id/unsigned', authMiddleware, statsController.getUnsignedList)
 
 module.exports = router

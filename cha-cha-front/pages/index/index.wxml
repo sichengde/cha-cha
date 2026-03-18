@@ -28,7 +28,7 @@
         <view class="query-card" wx:for="{{recentQueries}}" wx:key="id" bindtap="goToManage" data-id="{{item.id}}">
           <view class="query-info">
             <view class="query-title">{{item.name || '示例查询'}}</view>
-            <view class="query-time">{{item.created_at || '刚刚'}}</view>
+            <view class="query-time">{{item.displayCreatedAt || '刚刚'}}</view>
           </view>
           <view class="card-arrow">›</view>
         </view>

@@ -10,12 +10,13 @@
   <view class="content">
     <view class="menu-section">
       <view class="menu-group">
-        <view class="menu-item">
+        <view class="menu-item menu-share-item">
           <view class="menu-icon">
             <image src="/assets/icons/share.svg" class="menu-icon-img"></image>
           </view>
           <view class="menu-text">推荐给好友</view>
           <view class="menu-arrow">›</view>
+          <button class="share-overlay-btn" open-type="share" bindtap="onShareButtonTap"></button>
         </view>
         <view class="menu-item" bindtap="goToAbout">
           <view class="menu-icon">

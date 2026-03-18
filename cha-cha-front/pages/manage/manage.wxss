@@ -181,10 +181,6 @@
   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
-.action-icon.signature {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
-
 .action-text {
   flex: 1;
   display: flex;
@@ -277,17 +273,34 @@
 }
 
 .table-cell {
-  min-width: 150rpx;
+  width: 180rpx;
+  min-width: 180rpx;
+  max-width: 180rpx;
+  flex-shrink: 0;
   padding: 20rpx 16rpx;
   font-size: 24rpx;
   color: #333;
   text-align: center;
   position: relative;
   background: inherit;
+  box-sizing: border-box;
+}
+
+.table-cell.status-cell {
+  width: 130rpx;
+  min-width: 130rpx;
+  max-width: 130rpx;
 }
 
 .table-row.header .table-cell {
   background: #f5f5f5;
+}
+
+.cell-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .status-tag {
@@ -388,6 +401,110 @@
 .load-more {
   padding: 20rpx;
   text-align: center;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.share-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.modal-panel {
+  position: relative;
+  width: 620rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx 36rpx 30rpx;
+  box-sizing: border-box;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 600;
+  text-align: center;
+}
+
+.modal-desc {
+  margin-top: 16rpx;
+  margin-bottom: 28rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: #666;
+  text-align: center;
+}
+
+.modal-share-btn,
+.modal-cancel-btn {
+  height: 86rpx;
+  border-radius: 43rpx;
+  font-size: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-share-btn {
+  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+  color: #fff;
+}
+
+.modal-cancel-btn {
+  margin-top: 16rpx;
+  background: #f2f2f2;
+  color: #666;
+}
+
+.modal-share-btn::after,
+.modal-cancel-btn::after {
+  border: none;
+}
+
+.qr-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 420;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-panel {
+  position: relative;
+  width: 620rpx;
+  background: #fff;
+  border-radius: 22rpx;
+  padding: 34rpx;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.qr-title {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 20rpx;
+}
+
+.qr-image {
+  width: 520rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.qr-tip {
+  margin-top: 18rpx;
   font-size: 24rpx;
   color: #999;
 }
