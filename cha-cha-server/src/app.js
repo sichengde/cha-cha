@@ -28,7 +28,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-app.use('/api/', function(req, res, next) {
+app.use('/chacha/api/', function(req, res, next) {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
   res.set('Pragma', 'no-cache')
   res.set('Expires', '0')
@@ -40,30 +40,30 @@ const limiter = rateLimit({
   max: 1000,
   message: { success: false, message: '请求过于频繁，请稍后再试' }
 })
-app.use('/api/', limiter)
+app.use('/chacha/api/', limiter)
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+app.use('/chacha/uploads', express.static(path.join(__dirname, '../uploads')))
 
-app.get('/', function(req, res) {
+app.get('/chacha/', function(req, res) {
   res.json({
     success: true,
     message: '查查助手 API 服务',
     version: '1.0.0',
     endpoints: {
-      users: '/api/users',
-      queries: '/api/queries',
-      data: '/api/data',
-      files: '/api/files',
-      stats: '/api/stats'
+      users: '/chacha/api/users',
+      queries: '/chacha/api/queries',
+      data: '/chacha/api/data',
+      files: '/chacha/api/files',
+      stats: '/chacha/api/stats'
     }
   })
 })
 
-app.use('/api/users', userRoutes)
-app.use('/api/queries', queryRoutes)
-app.use('/api/data', dataRoutes)
-app.use('/api/files', fileRoutes)
-app.use('/api/stats', statsRoutes)
+app.use('/chacha/api/users', userRoutes)
+app.use('/chacha/api/queries', queryRoutes)
+app.use('/chacha/api/data', dataRoutes)
+app.use('/chacha/api/files', fileRoutes)
+app.use('/chacha/api/stats', statsRoutes)
 
 app.use(function(err, req, res, next) {
   console.error('Error:', err)

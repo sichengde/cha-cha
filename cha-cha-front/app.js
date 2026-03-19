@@ -1,6 +1,6 @@
 var api = require('./utils/api')
 var userApi = api.userApi
-var BASE_URL = require('./utils/config').BASE_URL
+var BASE_URL = api.BASE_URL
 
 App({
   globalData: {

@@ -1,5 +1,6 @@
 var util = require('./util')
-var BASE_URL = require('./config').BASE_URL
+var BASE_URL = 'https://wx.sygdsoft.com'
+var REQUEST_PREFIX = '/chacha'
 
 function request(options) {
   var url = options.url
@@ -14,7 +15,7 @@ function request(options) {
 
     util.showLoading()
 
-    var requestUrl = BASE_URL + url
+    var requestUrl = BASE_URL + REQUEST_PREFIX + url
     var requestData = data
 
     if (method === 'GET' && Object.keys(data).length > 0) {
@@ -59,7 +60,7 @@ function uploadFile(filePath) {
     util.showLoading('上传中...')
 
     wx.uploadFile({
-      url: BASE_URL + '/api/files/upload',
+      url: BASE_URL + REQUEST_PREFIX + '/api/files/upload',
       filePath: filePath,
       name: 'file',
       formData: {},
@@ -88,7 +89,7 @@ function downloadFile(url) {
     util.showLoading('下载中...')
 
     wx.downloadFile({
-      url: BASE_URL + url,
+      url: BASE_URL + REQUEST_PREFIX + url,
       header: { 'Authorization': 'Bearer ' + token },
       success: function(res) {
         util.hideLoading()
@@ -170,5 +171,6 @@ module.exports = {
   queryApi: queryApi,
   dataApi: dataApi,
   statsApi: statsApi,
-  fileApi: fileApi
+  fileApi: fileApi,
+  BASE_URL: BASE_URL
 }
