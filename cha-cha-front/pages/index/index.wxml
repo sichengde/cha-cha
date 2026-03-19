@@ -39,7 +39,7 @@
     </view>
 
     <view class="ad-placeholder">
-      <text class="ad-text">广告位</text>
+      <text class="ad-text"></text>
     </view>
   </view>
 </view>

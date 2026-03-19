@@ -67,9 +67,13 @@ app.use('/chacha/api/stats', statsRoutes)
 
 app.use(function(err, req, res, next) {
   console.error('Error:', err)
-  
+
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     return res.status(400).json({ success: false, message: 'JSON格式错误' })
+  }
+
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ success: false, message: '文件大小不能超过5MB' })
   }
 
   if (err.message === '只支持Excel文件') {
