@@ -28,9 +28,9 @@ Page({
   },
 
   onLoad: function() {
-    var systemInfo = wx.getSystemInfoSync()
+    var systemSetting = wx.getSystemSetting()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44
+      statusBarHeight: systemSetting.statusBarHeight || 44
     })
   },
 
@@ -218,13 +218,13 @@ Page({
     var queryId = this.data.shareQueryId
     if (queryId) {
       return {
-        title: this.data.shareQueryName || '查查助手',
+        title: this.data.shareQueryName || '小丽表格',
         path: getQueryPath(queryId)
       }
     }
 
     return {
-      title: '查查助手 - 轻量化信息查询工具',
+      title: '小丽表格 - 轻量化信息查询工具',
       path: '/pages/index/index'
     }
   }

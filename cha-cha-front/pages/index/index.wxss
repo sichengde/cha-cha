@@ -153,18 +153,97 @@
   color: #999;
 }
 
-.ad-placeholder {
-  height: 160rpx;
-  background: #fff;
-  border-radius: 16rpx;
+.upload-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 24rpx;
-  border: 2rpx dashed #ddd;
+  z-index: 9999;
 }
 
-.ad-text {
+.upload-modal-content {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 60rpx 48rpx;
+  width: 560rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upload-icon {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-spinner {
+  width: 80rpx;
+  height: 80rpx;
+  border: 6rpx solid #e8f8e8;
+  border-top-color: #07c160;
+  border-radius: 50%;
+  animation: upload-spin 1s linear infinite;
+}
+
+@keyframes upload-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.upload-file-name {
   font-size: 28rpx;
-  color: #ccc;
+  color: #333;
+  margin-bottom: 32rpx;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.upload-progress-bar {
+  width: 100%;
+  height: 12rpx;
+  background: #f0f0f0;
+  border-radius: 6rpx;
+  overflow: hidden;
+  margin-bottom: 16rpx;
+}
+
+.upload-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #07c160 0%, #06ad56 100%);
+  border-radius: 6rpx;
+  transition: width 0.2s ease-out;
+}
+
+.upload-progress-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #07c160;
+}
+
+.complete-icon {
+  background: #e8f8e8;
+  border-radius: 50%;
+}
+
+.complete-icon image {
+  width: 60rpx;
+  height: 60rpx;
+}
+
+.upload-complete-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #07c160;
 }

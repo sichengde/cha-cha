@@ -1,4 +1,5 @@
 var app = getApp()
+var fileApi = require('../../../utils/api').fileApi
 
 Page({
   data: {
@@ -8,9 +9,9 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemInfo = wx.getSystemInfoSync()
+    var systemSetting = wx.getSystemSetting()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44,
+      statusBarHeight: systemSetting.statusBarHeight || 44,
       editId: options && options.editId ? options.editId : ''
     })
     this.initHeaders()
@@ -37,6 +38,10 @@ Page({
   },
 
   goBack: function() {
+    var globalUploadedFile = app.globalData.uploadedFile
+    if (globalUploadedFile && globalUploadedFile.fileId) {
+      fileApi.deleteTemp(globalUploadedFile.fileId).catch(function() {})
+    }
     wx.navigateBack()
   },
 

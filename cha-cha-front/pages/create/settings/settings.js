@@ -1,5 +1,6 @@
 var app = getApp()
 var api = require('../../../utils/api')
+var fileApi = require('../../../utils/api').fileApi
 var util = require('../../../utils/util')
 var getQueryPath = util.getQueryPath
 var showQrPreviewFromTempFile = util.showQrPreviewFromTempFile
@@ -91,6 +92,7 @@ Page({
     showQrPreview: false,
     qrPreviewPath: '',
     createdQueryId: null,
+    isSharing: false,
     isEditMode: false,
     editQueryId: '',
     pageTitle: '创建查询',
@@ -98,11 +100,12 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemInfo = wx.getSystemInfoSync()
+    var systemSetting = wx.getSystemSetting()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44
+      statusBarHeight: systemSetting.statusBarHeight || 44
     })
     this.initDateTimePicker()
+    wx.updateShareMenu({ withShareTicket: true })
 
     if (options && options.editId) {
       this.setData({
@@ -119,15 +122,20 @@ Page({
   },
 
   onShow: function() {
+    if (this.data.isSharing) {
+      this.setData({ isSharing: false })
+      if (this.data.showShareModal) {
+        this.hideShareModal()
+        return
+      }
+    }
+    
+    if (this.data.isEditMode) return
     var selectedHeaders = app.globalData.selectedHeaders
-    if (Array.isArray(selectedHeaders)) {
+    if (Array.isArray(selectedHeaders) && selectedHeaders.length > 0) {
       this.setData({ selectedHeaders: selectedHeaders })
       this.updateConditionText()
       this.syncModifiableColumns(true)
-    }
-
-    if (!this.data.isEditMode) {
-      this.initData()
     }
   },
 
@@ -194,8 +202,14 @@ Page({
     var selectedHeaders = app.globalData.selectedHeaders || []
 
     if (uploadedFile) {
+      var fileInfo = {
+        name: uploadedFile.name || '',
+        headers: uploadedFile.headers || [],
+        headerRowIndex: uploadedFile.headerRowIndex,
+        rowCount: uploadedFile.rowCount
+      }
       this.setData({
-        uploadedFile: uploadedFile,
+        uploadedFile: fileInfo,
         queryHeaders: uploadedFile.headers || [],
         name: this.data.name || uploadedFile.name || '',
         selectedHeaders: selectedHeaders
@@ -365,6 +379,10 @@ Page({
   },
 
   goBack: function() {
+    var globalUploadedFile = app.globalData.uploadedFile
+    if (globalUploadedFile && globalUploadedFile.fileId) {
+      fileApi.deleteTemp(globalUploadedFile.fileId).catch(function() {})
+    }
     wx.navigateBack()
   },
 
@@ -584,9 +602,10 @@ Page({
 
   createQuery: function() {
     var that = this
+    var globalUploadedFile = app.globalData.uploadedFile
     var uploadedFile = this.data.uploadedFile || {}
 
-    if (!uploadedFile.headers || uploadedFile.headers.length === 0 || !uploadedFile.rows || uploadedFile.rows.length === 0) {
+    if (!uploadedFile.headers || uploadedFile.headers.length === 0 || !globalUploadedFile || !globalUploadedFile.fileId) {
       wx.showToast({ title: '缺少文件数据，请重新上传', icon: 'none' })
       return
     }
@@ -601,7 +620,8 @@ Page({
       require_nickname: this.data.requireNickname,
       query_limit: 0,
       headers: this.buildQueryHeaders(true),
-      data: uploadedFile.rows
+      file_id: globalUploadedFile.fileId,
+      header_row_index: globalUploadedFile.headerRowIndex
     }
 
     if (this.data.timeLimitText !== '不限制' && this.data.startTime && this.data.endTime) {
@@ -610,19 +630,28 @@ Page({
     }
 
     api.queryApi.create(queryData).then(function(res) {
-      wx.hideLoading()
       if (res.success) {
+        if (globalUploadedFile && globalUploadedFile.fileId) {
+          fileApi.deleteTemp(globalUploadedFile.fileId).catch(function() {})
+        }
         app.globalData.createdQueryId = res.data.id
         that.setData({
           showShareModal: true,
           createdQueryId: res.data.id
         })
       } else {
+        if (globalUploadedFile && globalUploadedFile.fileId) {
+          fileApi.deleteTemp(globalUploadedFile.fileId).catch(function() {})
+        }
         wx.showToast({ title: res.message || '创建失败', icon: 'none' })
       }
     }).catch(function() {
-      wx.hideLoading()
+      if (globalUploadedFile && globalUploadedFile.fileId) {
+        fileApi.deleteTemp(globalUploadedFile.fileId).catch(function() {})
+      }
       wx.showToast({ title: '网络错误，请重试', icon: 'none' })
+    }).finally(function() {
+      wx.hideLoading()
     })
   },
 
@@ -675,6 +704,10 @@ Page({
     })
   },
 
+  onShareTap: function() {
+    this.setData({ isSharing: true })
+  },
+
   generateCreatedQueryQrCode: function() {
     var that = this
     var queryId = this.data.createdQueryId
@@ -717,7 +750,7 @@ Page({
     var queryId = this.data.createdQueryId || app.globalData.createdQueryId
     var path = queryId ? getQueryPath(queryId) : '/pages/index/index'
     return {
-      title: this.data.name || '查查助手',
+      title: this.data.name || '小丽表格',
       path: path
     }
   }

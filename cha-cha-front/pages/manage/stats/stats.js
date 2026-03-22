@@ -22,9 +22,9 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemInfo = wx.getSystemInfoSync()
+    var systemSetting = wx.getSystemSetting()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44
+      statusBarHeight: systemSetting.statusBarHeight || 44
     })
 
     if (options.id) {

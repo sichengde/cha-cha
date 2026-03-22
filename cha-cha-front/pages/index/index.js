@@ -9,13 +9,17 @@ Page({
     userInfo: null,
     recentQueries: [],
     statusBarHeight: 44,
-    loading: false
+    loading: false,
+    uploading: false,
+    uploadProgress: 0,
+    uploadComplete: false,
+    uploadFileName: ''
   },
 
   onLoad: function() {
-    var systemInfo = wx.getSystemInfoSync()
+    var systemSetting = wx.getSystemSetting()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44
+      statusBarHeight: systemSetting.statusBarHeight || 44
     })
   },
 
@@ -103,33 +107,58 @@ Page({
 
   processFile: function(file) {
     var that = this
-    
-    fileApi.upload(file.path).then(function(res) {
-      if (res.success) {
-        var data = res.data
-        app.globalData.uploadedFile = {
-          name: file.name,
-          size: that.formatFileSize(file.size),
-          path: file.path,
-          headers: data.headers,
-          rows: data.data,
-          allRows: data.allRows,
-          headerRowIndex: data.headerRowIndex || 0,
-          rowCount: data.rowCount
-        }
 
-        wx.navigateTo({
-          url: '/pages/create/preview/preview'
+    this.setData({
+      uploading: true,
+      uploadComplete: false,
+      uploadProgress: 0,
+      uploadFileName: file.name
+    })
+
+    fileApi.upload(file.path, function(progressInfo) {
+      that.setData({
+        uploadProgress: progressInfo.progress
+      })
+    }).then(function(res) {
+      that.setData({
+        uploading: false,
+        uploadComplete: true
+      })
+
+      setTimeout(function() {
+        that.setData({
+          uploadComplete: false
         })
-      } else {
-        wx.showToast({
-          title: res.message || '解析失败',
-          icon: 'none'
-        })
-      }
+
+        if (res.success) {
+          var data = res.data
+          app.globalData.uploadedFile = {
+            fileId: data.fileId,
+            name: file.name || data.fileName || '',
+            size: that.formatFileSize(file.size),
+            headers: data.headers,
+            headerRowIndex: data.headerRowIndex || 0,
+            rowCount: data.rowCount,
+            previewRows: data.previewRows || []
+          }
+
+          wx.navigateTo({
+            url: '/pages/create/preview/preview'
+          })
+        } else {
+          wx.showToast({
+            title: res.message || '解析失败',
+            icon: 'none'
+          })
+        }
+      }, 500)
     }).catch(function(err) {
+      that.setData({
+        uploading: false,
+        uploadComplete: false
+      })
       wx.showToast({
-        title: '上传失败',
+        title: err.message || '上传失败',
         icon: 'none'
       })
     })
@@ -158,7 +187,7 @@ Page({
       }
     }
     return {
-      title: '查查助手',
+      title: '小丽表格',
       path: '/pages/index/index'
     }
   }

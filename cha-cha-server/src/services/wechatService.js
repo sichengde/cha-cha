@@ -91,17 +91,24 @@ async function generateQueryUrlLink(queryId) {
 
 async function generateQueryQrCodeBuffer(queryId) {
   const accessToken = await getWechatAccessToken()
-  const path = getQueryMiniProgramPath(queryId).slice(1)
+  const { envVersion } = getWechatConfig()
+  const sceneValue = queryId.replace(/-/g, '')
+  const requestBody = {
+    scene: sceneValue,
+    page: 'pages/query/query',
+    width: 430,
+    env_version: envVersion || 'trial',
+    check_path: false
+  }
+  
+  console.log('[生成二维码] 请求参数:', JSON.stringify(requestBody))
+  
   const response = await fetch(
-    `https://api.weixin.qq.com/wxa/getwxacode?access_token=${encodeURIComponent(accessToken)}`,
+    `https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=${encodeURIComponent(accessToken)}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path: path,
-        width: 430,
-        check_path: false
-      })
+      body: JSON.stringify(requestBody)
     }
   )
 
@@ -119,15 +126,37 @@ async function generateQueryQrCodeBuffer(queryId) {
     } catch (e) {
       errorData = null
     }
+    console.error('[生成二维码] 微信API错误:', errorData)
     throw createError((errorData && errorData.errmsg) || '生成小程序码失败', 'WECHAT_QRCODE_API_ERROR')
   }
 
   return buffer
 }
 
+async function getOpenidByCode(code) {
+  const config = ensureWechatConfig()
+  const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${encodeURIComponent(config.appId)}&secret=${encodeURIComponent(config.appSecret)}&js_code=${encodeURIComponent(code)}&grant_type=authorization_code`
+  
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw createError('获取微信OpenID失败', 'WECHAT_OPENID_HTTP_ERROR')
+  }
+
+  const data = await response.json()
+  if (!data || data.errcode) {
+    throw createError((data && data.errmsg) || '获取微信OpenID失败', 'WECHAT_OPENID_API_ERROR')
+  }
+
+  return {
+    openid: data.openid,
+    sessionKey: data.session_key
+  }
+}
+
 module.exports = {
   getWechatConfig,
   getQueryMiniProgramPath,
   generateQueryUrlLink,
-  generateQueryQrCodeBuffer
+  generateQueryQrCodeBuffer,
+  getOpenidByCode
 }

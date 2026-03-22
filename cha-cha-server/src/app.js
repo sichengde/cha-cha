@@ -12,6 +12,7 @@ const fileRoutes = require('./routes/fileRoutes')
 const statsRoutes = require('./routes/statsRoutes')
 
 const { testConnection } = require('./config/database')
+const { startTempFileCleaner } = require('./controllers/fileController')
 
 const app = express()
 
@@ -47,7 +48,7 @@ app.use('/chacha/uploads', express.static(path.join(__dirname, '../uploads')))
 app.get('/chacha/', function(req, res) {
   res.json({
     success: true,
-    message: '查查助手 API 服务',
+    message: '小丽表格 API 服务',
     version: '1.0.0',
     endpoints: {
       users: '/chacha/api/users',
@@ -96,6 +97,8 @@ async function startServer() {
       console.error('数据库连接失败，请检查配置')
       process.exit(1)
     }
+
+    startTempFileCleaner()
 
     app.listen(PORT, '0.0.0.0', function() {
       console.log('服务器运行在端口 ' + PORT)

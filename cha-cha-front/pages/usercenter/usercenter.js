@@ -4,9 +4,9 @@ Page({
   },
 
   onLoad: function() {
-    var systemInfo = wx.getSystemInfoSync()
+    var systemSetting = wx.getSystemSetting()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44
+      statusBarHeight: systemSetting.statusBarHeight || 44
     })
   },
 
@@ -20,7 +20,7 @@ Page({
 
   onShareAppMessage: function() {
     return {
-      title: '查查助手 - 轻量化信息查询工具',
+      title: '小丽表格 - 轻量化信息查询工具',
       path: '/pages/index/index'
     }
   }

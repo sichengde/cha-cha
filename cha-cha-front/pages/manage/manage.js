@@ -43,9 +43,9 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemInfo = wx.getSystemInfoSync()
+    var systemSetting = wx.getSystemSetting()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44
+      statusBarHeight: systemSetting.statusBarHeight || 44
     })
 
     if (options.id) {
@@ -372,7 +372,7 @@ Page({
 
   onShareAppMessage: function() {
     var queryId = this.data.shareQueryId || this.data.queryId
-    var title = this.data.shareQueryName || (this.data.queryInfo && this.data.queryInfo.name) || '查查助手'
+    var title = this.data.shareQueryName || (this.data.queryInfo && this.data.queryInfo.name) || '小丽表格'
     return {
       title: title,
       path: queryId ? getQueryPath(queryId) : '/pages/index/index'

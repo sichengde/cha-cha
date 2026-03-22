@@ -5,6 +5,7 @@ const {
   generateQueryUrlLink,
   generateQueryQrCodeBuffer
 } = require('../services/wechatService')
+const { readFileData } = require('./fileController')
 
 function toMySQLDateTime(isoString) {
   if (!isoString) return null
@@ -20,12 +21,38 @@ function toBoolean(value) {
 const createQueryPage = async (req, res) => {
   try {
     const userId = req.user.id
-    const { name, description, allow_modify, enable_sign, require_nickname, query_limit, headers, data, start_time, end_time } = req.body
+    const { name, description, allow_modify, enable_sign, require_nickname, query_limit, headers, file_id, header_row_index, start_time, end_time } = req.body
 
-    if (!name || !Array.isArray(headers) || !Array.isArray(data) || headers.length === 0 || data.length === 0) {
+    if (!name || !Array.isArray(headers) || headers.length === 0) {
       return res.status(400).json({
         success: false,
         message: '缺少必要参数'
+      })
+    }
+
+    if (!file_id) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少文件ID'
+      })
+    }
+
+    let fileData
+    try {
+      fileData = readFileData(file_id, header_row_index)
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: '文件不存在或已过期，请重新上传'
+      })
+    }
+
+    const { data } = fileData
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '文件数据为空'
       })
     }
 
@@ -83,14 +110,24 @@ const createQueryPage = async (req, res) => {
         )
       }
 
-      for (let i = 0; i < data.length; i++) {
-        const row = Array.isArray(data[i]) ? data[i] : []
-        await conn.execute(
-          `INSERT INTO query_data
-            (query_page_id, row_index, data, original_data)
-           VALUES (?, ?, ?, ?)`,
-          [queryPageId, i, JSON.stringify(row), JSON.stringify(row)]
-        )
+      const batchSize = 500
+      for (let i = 0; i < data.length; i += batchSize) {
+        const batch = data.slice(i, i + batchSize)
+        const values = []
+        const placeholders = []
+        
+        for (let j = 0; j < batch.length; j++) {
+          const row = Array.isArray(batch[j]) ? batch[j] : []
+          const rowIndex = i + j
+          const jsonStr = JSON.stringify(row)
+          placeholders.push('(?, ?, ?, ?)')
+          values.push(queryPageId, rowIndex, jsonStr, jsonStr)
+        }
+        
+        if (placeholders.length > 0) {
+          const sql = `INSERT INTO query_data (query_page_id, row_index, data, original_data) VALUES ${placeholders.join(', ')}`
+          await conn.execute(sql, values)
+        }
       }
     })
 

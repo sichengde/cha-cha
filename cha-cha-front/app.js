@@ -8,25 +8,22 @@ App({
     isLoggedIn: false,
     baseUrl: BASE_URL,
     querySettings: null,
-    loginPromise: null
+    loginPromise: null,
+    shareSuccess: false
   },
 
   onLaunch: function() {
-    this.autoLogin()
+    this.doLogin()
+  },
+
+  onShow: function(options) {
+    if (options && options.shareTickets && options.shareTickets.length > 0) {
+      this.globalData.shareSuccess = true
+    }
   },
 
   autoLogin: function() {
-    var that = this
-    var userInfo = wx.getStorageSync('userInfo')
-    var token = wx.getStorageSync('token')
-    
-    if (userInfo && token) {
-      this.globalData.userInfo = userInfo
-      this.globalData.isLoggedIn = true
-      return
-    }
-    
-    this.doLogin()
+    return this.doLogin()
   },
 
   doLogin: function() {
@@ -40,11 +37,8 @@ App({
       wx.login({
         success: function(res) {
           if (res.code) {
-            var openid = that.getOrCreateMockOpenid()
-            
             userApi.login({
               login_code: res.code,
-              openid: openid,
               nickname: '微信用户',
               avatar_url: ''
             }).then(function(data) {
@@ -84,18 +78,6 @@ App({
     })
     
     return this.globalData.loginPromise
-  },
-
-  getOrCreateMockOpenid: function() {
-    var cachedOpenid = wx.getStorageSync('mock_openid')
-    if (cachedOpenid) {
-      return cachedOpenid
-    }
-
-    var randomPart = Math.random().toString(36).slice(2, 12)
-    var openid = 'mock_' + Date.now() + '_' + randomPart
-    wx.setStorageSync('mock_openid', openid)
-    return openid
   },
 
   ensureLogin: function() {

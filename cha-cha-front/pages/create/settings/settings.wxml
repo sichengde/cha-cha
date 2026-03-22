@@ -9,7 +9,7 @@
     </view>
   </view>
 
-  <scroll-view class="content" scroll-y>
+  <view class="content">
     <view class="name-card">
       <view class="name-input-row">
         <text class="name-label">查询名称</text>
@@ -36,7 +36,7 @@
       </view>
     </view>
     <view class="modifiable-list" wx:if="{{allowModify}}">
-      <view class="modifiable-tip">仅可选择“非查询条件”的字段作为可编辑字段</view>
+      <view class="modifiable-tip">仅可选择"非查询条件"的字段作为可编辑字段</view>
       <view wx:if="{{modifiableColumns.length === 0}}" class="modifiable-empty">当前所有列都已作为查询条件，暂无可修改字段</view>
       <view
         wx:for="{{modifiableColumns}}"
@@ -76,11 +76,9 @@
       </view>
     </view>
 
-    <view class="bottom-space"></view>
-  </scroll-view>
-
-  <view class="bottom-bar">
-    <button class="btn-save" bindtap="saveAndShare">{{saveButtonText}}</button>
+    <view class="bottom-bar">
+      <button class="btn-save" bindtap="saveAndShare">{{saveButtonText}}</button>
+    </view>
   </view>
 
   <view class="time-modal" wx:if="{{showTimeModal}}">
@@ -129,7 +127,7 @@
       <view class="success-title">创建成功</view>
       <view class="success-desc">转发分享给大家查询吧</view>
       <view class="share-btns">
-        <button class="btn-share" open-type="share">转发到微信</button>
+        <button class="btn-share" open-type="share" bindtap="onShareTap">转发到微信</button>
         <button class="btn-secondary" bindtap="generateCreatedQueryQrCode">生成二维码</button>
       </view>
     </view>

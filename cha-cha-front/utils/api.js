@@ -1,5 +1,5 @@
 var util = require('./util')
-var BASE_URL = 'https://wx.sygdsoft.com'
+var BASE_URL = 'http://192.168.1.14:3000'
 var REQUEST_PREFIX = '/chacha'
 
 function request(options) {
@@ -7,6 +7,7 @@ function request(options) {
   var method = options.method || 'GET'
   var data = options.data || {}
   var header = options.header || {}
+  var timeout = options.timeout || 60000
 
   return new Promise(function(resolve, reject) {
     var token = wx.getStorageSync('token')
@@ -31,6 +32,7 @@ function request(options) {
       method: method,
       data: requestData,
       header: Object.assign({}, defaultHeader, header),
+      timeout: timeout,
       success: function(res) {
         util.hideLoading()
         if (res.statusCode === 200) {
@@ -54,30 +56,49 @@ function request(options) {
   })
 }
 
-function uploadFile(filePath) {
+function uploadFile(filePath, onProgress) {
   return new Promise(function(resolve, reject) {
     var token = wx.getStorageSync('token')
-    util.showLoading('上传中...')
 
-    wx.uploadFile({
+    var uploadTask = wx.uploadFile({
       url: BASE_URL + REQUEST_PREFIX + '/api/files/upload',
       filePath: filePath,
       name: 'file',
       formData: {},
       header: { 'Authorization': 'Bearer ' + token },
       success: function(res) {
-        util.hideLoading()
         if (res.statusCode === 200) {
-          resolve(JSON.parse(res.data))
+          var data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+          if (data.success) {
+            resolve(data)
+          } else {
+            util.showToast(data.message || '上传失败')
+            reject(new Error(data.message || '上传失败'))
+          }
         } else {
-          util.showToast('上传失败')
-          reject(new Error('上传失败'))
+          try {
+            var errData = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+            util.showToast(errData.message || '上传失败')
+            reject(new Error(errData.message || '上传失败'))
+          } catch (e) {
+            util.showToast('上传失败')
+            reject(new Error('上传失败'))
+          }
         }
       },
       fail: function(err) {
-        util.hideLoading()
-        util.showToast('上传失败')
+        util.showToast('网络错误，请检查网络')
         reject(err)
+      }
+    })
+
+    uploadTask.onProgressUpdate(function(res) {
+      if (onProgress) {
+        onProgress({
+          progress: res.progress,
+          totalBytesSent: res.totalBytesSent,
+          totalBytesExpectedToSend: res.totalBytesExpectedToSend
+        })
       }
     })
   })
@@ -130,7 +151,7 @@ var userApi = {
 }
 
 var queryApi = {
-  create: function(data) { return request({ url: '/api/queries', method: 'POST', data: data }) },
+  create: function(data) { return request({ url: '/api/queries', method: 'POST', data: data, timeout: 300000 }) },
   getMyList: function(params) { return request({ url: '/api/queries/my', data: params }) },
   getDetail: function(id) { return request({ url: '/api/queries/' + id }) },
   getShareInfo: function(id) { return request({ url: '/api/queries/' + id + '/share' }) },
@@ -162,6 +183,7 @@ var statsApi = {
 
 var fileApi = {
   upload: uploadFile,
+  deleteTemp: function(fileId) { return request({ url: '/api/files/temp/' + fileId, method: 'DELETE' }) },
   exportData: function(id) { return downloadFile('/api/files/export/' + id) }
 }
 

@@ -24,49 +24,27 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemInfo = wx.getSystemInfoSync()
+    var systemSetting = wx.getSystemSetting()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44
+      statusBarHeight: systemSetting.statusBarHeight || 44
     })
     
-    if (options.id) {
-      this.setData({ queryId: options.id })
-      this.loadQueryInfo(options.id)
-    } else if (options.example === 'true') {
-      this.loadExampleQuery()
-    }
-  },
-
-  loadExampleQuery: function() {
-    var exampleQuery = {
-      id: 'example',
-      name: '示例查询 - 成绩查询',
-      description: '2024年期末考试成绩查询',
-      cover: '',
-      settings: {
-        conditions: [0, 1],
-        allowModify: true,
-        modifyColumns: [3],
-        enableSign: true,
-        signType: 'button'
-      },
-      tableData: {
-        headers: ['姓名', '身份证后四位', '班级', '成绩', '排名'],
-        rows: [
-          ['张三', '1234', '一班', '95', '1'],
-          ['李四', '2345', '一班', '92', '2'],
-          ['王五', '3456', '二班', '88', '3']
-        ]
+    var queryId = options.id
+    if (!queryId && options.scene) {
+      try {
+        queryId = decodeURIComponent(options.scene)
+      } catch (e) {
+        queryId = options.scene
+      }
+      if (queryId && queryId.length === 32) {
+        queryId = queryId.slice(0, 8) + '-' + queryId.slice(8, 12) + '-' + queryId.slice(12, 16) + '-' + queryId.slice(16, 20) + '-' + queryId.slice(20)
       }
     }
-
-    this.setData({
-      queryInfo: exampleQuery,
-      queryConditions: [
-        { label: '姓名', value: '' },
-        { label: '身份证后四位', value: '' }
-      ]
-    })
+    
+    if (queryId) {
+      this.setData({ queryId: queryId })
+      this.loadQueryInfo(queryId)
+    }
   },
 
   loadQueryInfo: function(queryId) {
@@ -137,11 +115,6 @@ Page({
         wx.showToast({ title: '请填写完整查询条件', icon: 'none' })
         return
       }
-    }
-
-    if (queryId === 'example') {
-      this.doExampleQuery()
-      return
     }
 
     this.setData({
@@ -219,74 +192,6 @@ Page({
         modified: !!item.modified
       }
     })
-  },
-
-  doExampleQuery: function() {
-    var that = this
-    var queryConditions = this.data.queryConditions
-    var queryInfo = this.data.queryInfo
-    
-    this.setData({ loading: true })
-
-    setTimeout(function() {
-      var mockResult = that.findMockResult(queryConditions, queryInfo)
-      
-      if (mockResult) {
-        var resultData = queryInfo.tableData.headers.map(function(header, idx) {
-          return {
-            label: header,
-            value: mockResult[idx],
-            is_modifiable: queryInfo.settings.modifyColumns.indexOf(idx) > -1,
-            modified: false
-          }
-        })
-
-        var modifiableFields = queryInfo.settings.modifyColumns.map(function(idx) {
-          return {
-            label: queryInfo.tableData.headers[idx],
-            value: mockResult[idx],
-            newValue: ''
-          }
-        })
-
-        var decoratedResult = that.decorateQueryResult(resultData, true, modifiableFields)
-
-        that.setData({
-          queryResult: decoratedResult,
-          allowModify: true,
-          modifiableFields: modifiableFields,
-          hasPendingChanges: false,
-          loading: false
-        })
-      } else {
-        that.setData({
-          queryError: '未找到匹配的数据，请检查查询条件',
-          hasPendingChanges: false,
-          loading: false
-        })
-      }
-    }, 1000)
-  },
-
-  findMockResult: function(conditions, queryInfo) {
-    if (!queryInfo || !queryInfo.tableData || !queryInfo.tableData.rows) {
-      return null
-    }
-
-    var rows = queryInfo.tableData.rows
-    for (var i = 0; i < rows.length; i++) {
-      var row = rows[i]
-      var match = true
-      for (var j = 0; j < conditions.length; j++) {
-        var conditionIndex = queryInfo.settings.conditions[j]
-        if (row[conditionIndex] !== conditions[j].value) {
-          match = false
-          break
-        }
-      }
-      if (match) return row
-    }
-    return null
   },
 
   onResultValueTap: function(e) {
@@ -401,12 +306,6 @@ Page({
       return
     }
 
-    if (queryId === 'example') {
-      this.applyInlineChanges()
-      wx.showToast({ title: '修改成功', icon: 'success' })
-      return
-    }
-
     if (!queryDataId) {
       wx.showToast({ title: '数据异常，请重新查询', icon: 'none' })
       return
@@ -428,17 +327,7 @@ Page({
   },
 
   showSignature: function() {
-    var that = this
-    wx.showModal({
-      title: '手写签名',
-      content: '请在弹出的画板上进行签名',
-      showCancel: false,
-      success: function() {
-        that.setData({
-          signatureImage: '/assets/images/mock-signature.svg'
-        })
-      }
-    })
+    wx.showToast({ title: '签名功能暂未开放', icon: 'none' })
   },
 
   confirmSign: function() {
@@ -447,11 +336,6 @@ Page({
     var queryDataId = this.data.queryDataId
     var signType = this.data.signType
     var signatureImage = this.data.signatureImage
-
-    if (queryId === 'example') {
-      this.confirmExampleSign()
-      return
-    }
 
     if (signType === 'signature' && !signatureImage) {
       wx.showToast({ title: '请先完成签名', icon: 'none' })
@@ -471,19 +355,6 @@ Page({
     }).catch(function() {
       wx.showToast({ title: '签收失败', icon: 'none' })
     })
-  },
-
-  confirmExampleSign: function() {
-    var queryInfo = this.data.queryInfo
-    var signatureImage = this.data.signatureImage
-
-    if (queryInfo.settings.signType === 'signature' && !signatureImage) {
-      wx.showToast({ title: '请先完成签名', icon: 'none' })
-      return
-    }
-
-    this.setData({ signed: true })
-    wx.showToast({ title: '签收成功', icon: 'success' })
   },
 
   resetQuery: function() {

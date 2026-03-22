@@ -11,6 +11,14 @@ Page({
     }
   },
 
+  onShow: function() {
+    if (this.data.queryId) {
+      wx.switchTab({
+        url: '/pages/index/index'
+      })
+    }
+  },
+
   onShareAppMessage: function() {
     var queryId = this.data.queryId || app.globalData.createdQueryId
     return {
@@ -21,7 +29,7 @@ Page({
 
   closeModal: function() {
     wx.switchTab({
-      url: '/pages/myqueries/myqueries'
+      url: '/pages/index/index'
     })
   }
 })

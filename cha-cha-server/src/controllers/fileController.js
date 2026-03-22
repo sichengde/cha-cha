@@ -1,6 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 const XLSX = require('xlsx')
+const { v4: uuidv4 } = require('uuid')
 const { query, queryOne, insert } = require('../config/database')
 
 const uploadDir = path.join(__dirname, '../../uploads')
@@ -24,6 +25,7 @@ const uploadExcel = async (req, res) => {
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
 
     if (jsonData.length < 2) {
+      fs.unlinkSync(filePath)
       return res.status(400).json({
         success: false,
         message: '表格数据不足'
@@ -35,19 +37,29 @@ const uploadExcel = async (req, res) => {
     const headers = jsonData[headerRowIndex]
     const data = jsonData.slice(headerRowIndex + 1).filter(row => row.some(cell => cell !== undefined && cell !== ''))
 
+    const fileId = uuidv4()
+    const ext = path.extname(req.file.originalname)
+    const newFileName = `${fileId}${ext}`
+    const newFilePath = path.join(uploadDir, newFileName)
+    
+    fs.renameSync(filePath, newFilePath)
+
     res.json({
       success: true,
       data: {
+        fileId: fileId,
+        fileName: req.file.originalname,
         headers,
-        data,
-        allRows,
         headerRowIndex,
         rowCount: data.length,
-        previewRows: data.slice(0, 5)
+        previewRows: data.slice(0, 15)
       }
     })
   } catch (error) {
     console.error('上传Excel失败:', error)
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path)
+    }
     res.status(500).json({
       success: false,
       message: '解析Excel失败'
@@ -133,6 +145,62 @@ const findHeaderRow = (rows, worksheet) => {
   }
   
   return 0
+}
+
+const readFileData = (fileId, headerRowIndex) => {
+  const files = fs.readdirSync(uploadDir)
+  const targetFile = files.find(f => f.startsWith(fileId + '.'))
+  
+  if (!targetFile) {
+    throw new Error('文件不存在')
+  }
+  
+  const filePath = path.join(uploadDir, targetFile)
+  const workbook = XLSX.readFile(filePath)
+  const sheetName = workbook.SheetNames[0]
+  const worksheet = workbook.Sheets[sheetName]
+  const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+  
+  if (headerRowIndex === undefined || headerRowIndex === null) {
+    headerRowIndex = findHeaderRow(jsonData, worksheet)
+  }
+  
+  const headers = jsonData[headerRowIndex]
+  const data = jsonData.slice(headerRowIndex + 1).filter(row => row.some(cell => cell !== undefined && cell !== ''))
+  
+  return { headers, data }
+}
+
+const deleteTempFile = (req, res) => {
+  try {
+    const { fileId } = req.params
+    
+    if (!fileId) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少文件ID'
+      })
+    }
+    
+    const files = fs.readdirSync(uploadDir)
+    const targetFile = files.find(f => f.startsWith(fileId + '.'))
+    
+    if (targetFile) {
+      const filePath = path.join(uploadDir, targetFile)
+      fs.unlinkSync(filePath)
+    }
+    
+    res.json({
+      success: true,
+      message: '文件已删除'
+    })
+  } catch (error) {
+    console.error('删除临时文件失败:', error)
+    res.status(500).json({
+      success: false,
+      message: '删除文件失败'
+    })
+  }
 }
 
 const exportData = async (req, res) => {
@@ -230,7 +298,44 @@ const exportData = async (req, res) => {
   }
 }
 
+const startTempFileCleaner = () => {
+  const CLEAN_INTERVAL = 10 * 60 * 1000
+  const FILE_EXPIRE_TIME = 60 * 60 * 1000
+
+  const cleanExpiredFiles = () => {
+    try {
+      const files = fs.readdirSync(uploadDir)
+      const now = Date.now()
+      let cleanedCount = 0
+
+      files.forEach(file => {
+        const filePath = path.join(uploadDir, file)
+        const stats = fs.statSync(filePath)
+        const fileAge = now - stats.mtimeMs
+
+        if (fileAge > FILE_EXPIRE_TIME) {
+          fs.unlinkSync(filePath)
+          cleanedCount++
+        }
+      })
+
+      if (cleanedCount > 0) {
+        console.log(`[临时文件清理] 已清理 ${cleanedCount} 个过期文件`)
+      }
+    } catch (error) {
+      console.error('[临时文件清理] 清理失败:', error.message)
+    }
+  }
+
+  cleanExpiredFiles()
+  setInterval(cleanExpiredFiles, CLEAN_INTERVAL)
+  console.log('[临时文件清理] 定时清理任务已启动，每10分钟检查一次，清理超过1小时的文件')
+}
+
 module.exports = {
   uploadExcel,
-  exportData
+  exportData,
+  readFileData,
+  deleteTempFile,
+  startTempFileCleaner
 }

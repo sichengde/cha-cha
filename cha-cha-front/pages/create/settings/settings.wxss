@@ -1,9 +1,6 @@
 .settings-container {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
   background: #f5f5f5;
-  overflow: hidden;
 }
 
 .custom-navbar {
@@ -12,7 +9,6 @@
   top: 0;
   z-index: 100;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
 }
 
 .navbar-content {
@@ -48,11 +44,8 @@
 }
 
 .content {
-  flex: 1;
-  min-height: 0;
   padding: 20rpx;
-  box-sizing: border-box;
-  padding-bottom: 220rpx;
+  padding-bottom: 40rpx;
 }
 
 .name-card {
@@ -204,21 +197,18 @@
 }
 
 .bottom-space {
-  height: 200rpx;
+  height: 0;
 }
 
 .bottom-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20rpx 30rpx;
-  background: #fff;
-  border-top: 1rpx solid #f0f0f0;
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  margin-top: 40rpx;
+  padding-bottom: 40rpx;
+  max-width: 690rpx;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .btn-save {

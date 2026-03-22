@@ -53,17 +53,23 @@
 
 .share-section {
   width: 100%;
-}
-
-.share-options {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
 }
 
-.share-option {
+.share-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+.share-btn::after {
+  border: none;
 }
 
 .share-icon {

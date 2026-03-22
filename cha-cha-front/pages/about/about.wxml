@@ -12,7 +12,7 @@
   <view class="about-section">
     <view class="section-title">关于我们</view>
     <view class="section-content">
-      <text class="content-text">查查助手是一款轻量化信息查询与确认工具，支持用户上传表格生成专属查询页面，设置私密查询条件，实现"一人一查"的隐私保护。适用于成绩查询、信息核对、录取通知、报名查询等多种场景。</text>
+      <text class="content-text">小丽表格是一款轻量化信息查询与确认工具，支持用户上传表格生成专属查询页面，设置私密查询条件，实现"一人一查"的隐私保护。适用于成绩查询、信息核对、录取通知、报名查询等多种场景。</text>
     </view>
   </view>
 
@@ -58,6 +58,6 @@
   </view>
 
   <view class="about-footer">
-    <text class="copyright">© 2026 查查助手 版权所有</text>
+    <text class="copyright">© 2026 小丽表格 版权所有</text>
   </view>
 </view>

@@ -1,43 +1,48 @@
 const { v4: uuidv4 } = require('uuid')
 const { query, queryOne, insert } = require('../config/database')
 const { generateToken } = require('../config/auth')
+const { getOpenidByCode } = require('../services/wechatService')
 
 const loginOrRegister = async (req, res) => {
   try {
-    const { openid, login_code, nickname, avatar_url } = req.body
+    const { login_code, nickname, avatar_url } = req.body
 
-    if (!openid && !login_code) {
+    if (!login_code) {
       return res.status(400).json({
         success: false,
         message: '缺少登录凭证'
       })
     }
 
-    const normalizedOpenid = String(openid || '').trim()
-    if (!normalizedOpenid) {
+    let openid
+    try {
+      const result = await getOpenidByCode(login_code)
+      openid = result.openid
+    } catch (error) {
+      console.error('获取openid失败:', error.message)
       return res.status(400).json({
         success: false,
-        message: 'openid不能为空'
+        message: '微信登录失败，请重试'
       })
     }
 
-    if (!/^[a-zA-Z0-9_-]{3,100}$/.test(normalizedOpenid)) {
+    if (!openid) {
       return res.status(400).json({
         success: false,
-        message: 'openid格式不正确'
+        message: '获取用户信息失败'
       })
     }
 
     let user = await queryOne(
       'SELECT * FROM users WHERE openid = ?',
-      [normalizedOpenid]
+      [openid]
     )
 
     if (!user) {
       const userId = uuidv4()
       await insert('users', {
         id: userId,
-        openid: normalizedOpenid,
+        openid: openid,
         nickname: nickname || '微信用户',
         avatar_url: avatar_url || ''
       })

@@ -4,9 +4,9 @@ Page({
   },
 
   onLoad: function() {
-    var systemInfo = wx.getSystemInfoSync()
+    var systemSetting = wx.getSystemSetting()
     this.setData({
-      statusBarHeight: systemInfo.statusBarHeight || 44
+      statusBarHeight: systemSetting.statusBarHeight || 44
     })
   },
 
@@ -17,7 +17,7 @@ Page({
   goToAgreement: function() {
     wx.showModal({
       title: '用户协议',
-      content: '感谢您使用查查助手。使用本服务即表示您同意遵守相关条款和规定。',
+      content: '感谢您使用小丽表格。使用本服务即表示您同意遵守相关条款和规定。',
       showCancel: false
     })
   },

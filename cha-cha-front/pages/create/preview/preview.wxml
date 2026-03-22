@@ -13,9 +13,10 @@
     <view class="header-tip">
       <text class="tip-text">表头若有误，您可</text>
       <text class="tip-link" bindtap="reselectHeader">重新选择表头行</text>
+      <text class="row-count" wx:if="{{totalRows > 0}}">（共 {{totalRows}} 行）</text>
     </view>
 
-    <scroll-view class="table-scroll" scroll-x scroll-y>
+    <scroll-view class="table-scroll" scroll-x scroll-y bindscrolltolower="loadMore">
       <view class="table">
         <view class="table-row header">
           <view class="table-cell" wx:for="{{headers}}" wx:key="index" bindtap="editHeader" data-index="{{index}}">
@@ -23,11 +24,22 @@
             <image class="edit-icon" src="/assets/icons/edit.svg" mode="aspectFit"></image>
           </view>
         </view>
-        <view class="table-row" wx:for="{{rows}}" wx:key="index">
+        <view class="table-row" wx:for="{{displayRows}}" wx:key="index">
           <view class="table-cell" wx:for="{{item}}" wx:for-item="cell" wx:for-index="cellIndex" wx:key="cellIndex">
             <text>{{cell}}</text>
           </view>
         </view>
+      </view>
+
+      <view class="table-load-more" wx:if="{{isLoadingMore}}">
+        <view class="loading-spinner"></view>
+        <text class="load-text">加载中</text>
+      </view>
+
+      <view class="table-load-more no-more" wx:if="{{totalRows > 15}}">
+        <view class="load-divider"></view>
+        <text class="load-text no-more">仅显示前15行预览，共{{totalRows}}行</text>
+        <view class="load-divider"></view>
       </view>
     </scroll-view>
 
@@ -63,8 +75,8 @@
     <view class="modal-content">
       <view class="modal-title">选择表头行</view>
       <scroll-view class="row-list" scroll-y>
-        <view class="row-item {{selectedHeaderRow === index ? 'selected' : ''}}" 
-              wx:for="{{allRows}}" wx:key="index" 
+        <view class="row-item {{selectedHeaderRow === index ? 'selected' : ''}}"
+              wx:for="{{allRows}}" wx:key="index"
               bindtap="selectHeaderRow" data-index="{{index}}">
           <text class="row-label">第{{index + 1}}行</text>
           <text class="row-content">{{item}}</text>

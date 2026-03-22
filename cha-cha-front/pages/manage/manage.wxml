@@ -9,6 +9,7 @@
     </view>
   </view>
 
+  <scroll-view scroll-y class="scroll-content">
   <view class="header-card">
     <view class="header-info">
       <text class="query-name">{{queryInfo.name}}</text>
@@ -118,6 +119,7 @@
   </view>
 
   <view class="bottom-space"></view>
+  </scroll-view>
 
   <view class="bottom-bar">
     <button class="btn-share" bindtap="shareQuery">分享查询</button>
