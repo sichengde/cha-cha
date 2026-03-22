@@ -3,7 +3,6 @@ node_modules/
 package-lock.json
 yarn.lock
 
-
 # IDE
 .vscode/
 .idea/
@@ -23,7 +22,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Uploads
-cha-cha-server/uploads/
+uploads/
 
 # Build
 dist/
@@ -32,3 +31,7 @@ build/
 # Temporary files
 *.tmp
 .temp/
+
+# Environment
+.env.local
+.env.*.local
