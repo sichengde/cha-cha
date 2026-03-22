@@ -1,5 +1,6 @@
 var util = require('./util')
-var BASE_URL = 'http://192.168.1.14:3000'
+//var BASE_URL = 'http://192.168.1.14:3000'
+var BASE_URL = 'https://wx.sygdsoft.com'
 var REQUEST_PREFIX = '/chacha'
 
 function request(options) {

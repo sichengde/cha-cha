@@ -118,12 +118,10 @@
     </view>
   </view>
 
-  <view class="bottom-space"></view>
-  </scroll-view>
-
   <view class="bottom-bar">
     <button class="btn-share" bindtap="shareQuery">分享查询</button>
   </view>
+  </scroll-view>
 
   <view class="share-modal" wx:if="{{showShareGuide}}">
     <view class="modal-mask" bindtap="hideShareGuide"></view>

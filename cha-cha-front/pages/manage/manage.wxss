@@ -370,22 +370,12 @@
   color: #ccc;
 }
 
-.bottom-space {
-  height: 200rpx;
-}
-
 .bottom-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   display: flex;
   align-items: center;
-  padding: 20rpx 30rpx;
-  background: #fff;
-  border-top: 1rpx solid #f0f0f0;
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  z-index: 100;
+  justify-content: center;
+  margin: 30rpx;
+  padding-bottom: calc(30rpx + env(safe-area-inset-bottom));
 }
 
 .btn-share {
