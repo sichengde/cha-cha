@@ -162,8 +162,24 @@ const updateUserInfo = async (req, res) => {
   }
 }
 
+const uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: '请上传头像' })
+    }
+
+    const avatarPath = '/chacha/uploads/avatars/' + req.file.filename
+
+    res.json({ success: true, data: { path: avatarPath } })
+  } catch (error) {
+    console.error('上传头像失败:', error)
+    res.status(500).json({ success: false, message: '上传头像失败' })
+  }
+}
+
 module.exports = {
   loginOrRegister,
   getUserInfo,
-  updateUserInfo
+  updateUserInfo,
+  uploadAvatar
 }

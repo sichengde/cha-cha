@@ -2,38 +2,50 @@
   <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
     <view class="navbar-content">
       <view class="navbar-left">
-        <view class="logo">
-          <text class="logo-text">班</text>
-        </view>
+        <image class="logo-img" src="/assets/icons/logo.png" mode="aspectFill"></image>
         <text class="app-name">班班通丨线上收集</text>
       </view>
     </view>
   </view>
 
   <view class="content">
-    <view class="main-card" bindtap="goToCreate">
-      <view class="card-icon">
-        <image src="/assets/icons/table.svg" class="card-icon-img"></image>
-      </view>
-      <view class="card-content">
+    <view class="card-row">
+      <view class="main-card-half" bindtap="goToCreate">
+        <view class="card-icon">
+          <image src="/assets/icons/table.svg" class="card-icon-img"></image>
+        </view>
         <view class="card-title">创建查询</view>
-        <view class="card-desc">上传Excel表格，快速创建查询页面</view>
+        <view class="card-desc">上传Excel快速创建</view>
       </view>
-      <view class="card-arrow">›</view>
+
+      <view class="main-card-half" bindtap="goToJielong">
+        <view class="card-icon card-icon-jielong">
+          <image src="/assets/icons/sign.svg" class="card-icon-img"></image>
+        </view>
+        <view class="card-title">创建接龙</view>
+        <view class="card-desc">在线接龙统计</view>
+      </view>
     </view>
 
     <view class="tabs-section">
-      <view class="section-title">最近查询</view>
+      <view class="section-title">最近活动</view>
       <view class="query-list">
-        <view class="query-card" wx:for="{{recentQueries}}" wx:key="id" bindtap="goToManage" data-id="{{item.id}}">
+        <view class="query-card" wx:for="{{recentItems}}" wx:key="_key" bindtap="goToItem" data-id="{{item.id}}" data-type="{{item._type}}">
+          <view class="item-type-tag {{item._type === 'jielong' ? 'tag-jielong' : 'tag-query'}}">{{item._type === 'jielong' ? '接龙' : '查询'}}</view>
           <view class="query-info">
-            <view class="query-title">{{item.name || '示例查询'}}</view>
+            <view class="query-title">{{item._name}}</view>
             <view class="query-time">{{item.displayCreatedAt || '刚刚'}}</view>
           </view>
           <view class="card-arrow">›</view>
         </view>
-        <view class="empty-tip" wx:if="{{recentQueries.length === 0}}">
-          <text>暂无查询记录</text>
+        <view class="empty-tip" wx:if="{{recentItems.length === 0}}">
+          <text>暂无记录</text>
+        </view>
+        <view class="load-more-tip" wx:if="{{recentItems.length > 0 && loading}}">
+          <text>加载中...</text>
+        </view>
+        <view class="load-more-tip" wx:if="{{recentItems.length > 0 && !hasMoreItems && !loading}}">
+          <text>没有更多了</text>
         </view>
       </view>
     </view>

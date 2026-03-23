@@ -10,6 +10,7 @@ const queryRoutes = require('./routes/queryRoutes')
 const dataRoutes = require('./routes/dataRoutes')
 const fileRoutes = require('./routes/fileRoutes')
 const statsRoutes = require('./routes/statsRoutes')
+const jielongRoutes = require('./routes/jielongRoutes')
 
 const { testConnection } = require('./config/database')
 const { startTempFileCleaner } = require('./controllers/fileController')
@@ -58,7 +59,8 @@ app.get('/chacha/', function(req, res) {
       queries: '/chacha/api/queries',
       data: '/chacha/api/data',
       files: '/chacha/api/files',
-      stats: '/chacha/api/stats'
+      stats: '/chacha/api/stats',
+      jielong: '/chacha/api/jielong'
     }
   })
 })
@@ -68,6 +70,7 @@ app.use('/chacha/api/queries', queryRoutes)
 app.use('/chacha/api/data', dataRoutes)
 app.use('/chacha/api/files', fileRoutes)
 app.use('/chacha/api/stats', statsRoutes)
+app.use('/chacha/api/jielong', jielongRoutes)
 
 app.use(function(err, req, res, next) {
   console.error('Error:', err)

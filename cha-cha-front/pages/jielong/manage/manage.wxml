@@ -1,0 +1,38 @@
+<view class="page-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="goBack">
+        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">名单管理</view>
+      <view class="navbar-right">
+        <text class="export-btn" bindtap="exportMembers">导出</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="manage-content">
+    <view class="summary-bar">
+      <text class="summary-text">共 {{memberCount}} 人接龙</text>
+    </view>
+
+    <view class="member-list">
+      <view class="member-item" wx:for="{{members}}" wx:key="id">
+        <text class="member-seq">{{item.seq}}</text>
+        <image class="member-avatar" src="{{item.avatar || '/assets/icons/user.png'}}" mode="aspectFill"></image>
+        <view class="member-info">
+          <text class="member-name">{{item.nickname}}</text>
+          <text class="member-remark" wx:if="{{item.remark}}">{{item.remark}}</text>
+          <text class="member-time">{{item.joined_at}}</text>
+        </view>
+        <view class="remove-btn" catchtap="removeMember" data-id="{{item.id}}" data-name="{{item.nickname}}">
+          <text class="remove-text">移除</text>
+        </view>
+      </view>
+
+      <view class="empty-tip" wx:if="{{members.length === 0 && !loading}}">
+        <text>暂无接龙成员</text>
+      </view>
+    </view>
+  </view>
+</view>

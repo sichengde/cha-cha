@@ -207,7 +207,7 @@ const getQueryPage = async (req, res) => {
 const getMyQueryPages = async (req, res) => {
   try {
     const userId = req.user.id
-    const { status, page = 1, pageSize = 10 } = req.query
+    const { status, page = 1, pageSize = 10, keyword } = req.query
 
     let sql = `SELECT qp.*, 
                 (SELECT COUNT(*) FROM query_records qr WHERE qr.query_page_id = qp.id) as query_count,
@@ -215,6 +215,11 @@ const getMyQueryPages = async (req, res) => {
                 (SELECT COUNT(*) FROM query_data qd WHERE qd.query_page_id = qp.id) as total_count
          FROM query_pages qp WHERE qp.user_id = ?`
     const params = [userId]
+
+    if (keyword) {
+      sql += ' AND qp.name LIKE ?'
+      params.push('%' + keyword + '%')
+    }
 
     if (status && status !== 'all') {
       sql += ' AND qp.status = ?'
@@ -236,8 +241,8 @@ const getMyQueryPages = async (req, res) => {
     }
 
     const totalResult = await queryOne(
-      `SELECT COUNT(*) as total FROM query_pages WHERE user_id = ?${status && status !== 'all' ? ' AND status = ?' : ''}`,
-      status && status !== 'all' ? [userId, status] : [userId]
+      `SELECT COUNT(*) as total FROM query_pages WHERE user_id = ?${keyword ? ' AND name LIKE ?' : ''}${status && status !== 'all' ? ' AND status = ?' : ''}`,
+      [userId, ...(keyword ? ['%' + keyword + '%'] : []), ...(status && status !== 'all' ? [status] : [])]
     )
 
     res.json({

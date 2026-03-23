@@ -1,0 +1,77 @@
+<view class="page-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="{{isDirectEntry ? 'goHome' : 'goBack'}}">
+        <image class="{{isDirectEntry ? 'home-icon' : 'back-icon'}}" src="/assets/icons/{{isDirectEntry ? 'home' : 'back'}}.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">参与接龙</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
+  <view class="join-content" wx:if="{{jielong && !loading}}">
+    <view class="info-card">
+      <view class="info-title">{{jielong.title}}</view>
+      <view class="info-desc" wx:if="{{jielong.description}}">{{jielong.description}}</view>
+      <view class="info-meta">
+        <view class="meta-item" wx:if="{{jielong.deadline}}">
+          <text class="meta-label">截止时间：</text>
+          <text class="meta-value">{{jielong.deadline}}</text>
+        </view>
+        <view class="meta-item" wx:if="{{jielong.max_count}}">
+          <text class="meta-label">人数上限：</text>
+          <text class="meta-value">{{memberCount}}/{{jielong.max_count}}</text>
+        </view>
+        <view class="meta-item">
+          <text class="meta-count">已有 {{memberCount}} 人参与</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 已接龙 -->
+    <view class="result-card" wx:if="{{isJoined}}">
+      <image class="result-icon" src="/assets/icons/check.svg" mode="aspectFit"></image>
+      <text class="result-text">你已参与接龙</text>
+      <button class="detail-btn" bindtap="goToDetail">查看详情</button>
+    </view>
+
+    <!-- 已关闭 -->
+    <view class="result-card" wx:elif="{{isClosed}}">
+      <text class="result-text closed">接龙已关闭</text>
+      <button class="detail-btn" bindtap="goToDetail">查看详情</button>
+    </view>
+
+    <!-- 已满员 -->
+    <view class="result-card" wx:elif="{{isFull}}">
+      <text class="result-text closed">接龙已满员</text>
+      <button class="detail-btn" bindtap="goToDetail">查看详情</button>
+    </view>
+
+    <!-- 填写接龙 -->
+    <view class="form-card" wx:else>
+      <view class="form-title">填写接龙信息</view>
+      <view class="field-area" wx:if="{{jielong.fields && jielong.fields.length > 0}}">
+        <view class="field-item" wx:for="{{jielong.fields}}" wx:key="name">
+          <view class="field-label">
+            <text class="{{item.required ? 'required' : ''}}">{{item.name}}</text>
+          </view>
+          <input class="field-input" placeholder="请输入{{item.name}}" value="{{fieldValues[item.name]}}" bindinput="onFieldInput" data-name="{{item.name}}" maxlength="100" />
+        </view>
+      </view>
+      <view class="remark-area" wx:if="{{jielong.need_remark}}">
+        <view class="remark-label">{{jielong.remark_hint || '请填写备注'}}</view>
+        <textarea class="remark-input" placeholder="请输入" value="{{remarkInput}}" bindinput="onRemarkInput" maxlength="200" />
+      </view>
+      <view class="no-remark-tip" wx:if="{{!jielong.need_remark && (!jielong.fields || jielong.fields.length === 0)}}">
+        <text>点击下方按钮即可参与接龙</text>
+      </view>
+      <button class="submit-btn" bindtap="doSubmit" disabled="{{submitting}}">
+        {{submitting ? '提交中...' : '提交接龙'}}
+      </button>
+    </view>
+  </view>
+
+  <view class="loading-tip" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+</view>

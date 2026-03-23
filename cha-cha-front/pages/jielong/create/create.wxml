@@ -1,0 +1,87 @@
+<view class="page-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="goBack">
+        <image class="back-icon" src="/assets/icons/back.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">创建接龙</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
+  <view class="form-content">
+    <view class="form-card">
+      <view class="form-item">
+        <view class="form-row">
+          <text class="form-label required">接龙标题</text>
+          <text class="char-count">{{title.length}}/30</text>
+        </view>
+        <input class="form-input" placeholder="请输入标题（最多30字）" maxlength="30" value="{{title}}" bindinput="onTitleInput" />
+      </view>
+
+      <view class="form-item">
+        <view class="form-row">
+          <text class="form-label">活动描述</text>
+          <text class="char-count">{{description.length}}/200</text>
+        </view>
+        <textarea class="form-textarea" placeholder="请输入活动描述（选填，最多200字）" maxlength="200" value="{{description}}" bindinput="onDescInput" />
+      </view>
+    </view>
+
+    <view class="form-card">
+      <view class="form-item row">
+        <text class="form-label">截止时间</text>
+        <view class="form-right">
+          <picker mode="date" bindchange="onDeadlinePick">
+            <text class="picker-text {{deadlineDisplay ? '' : 'placeholder'}}">{{deadlineDisplay || '选择截止时间（选填）'}}</text>
+          </picker>
+          <text class="clear-btn" wx:if="{{deadline}}" catchtap="clearDeadline">✕</text>
+        </view>
+      </view>
+
+      <view class="form-item row">
+        <text class="form-label">人数上限</text>
+        <input class="form-input-inline" type="number" placeholder="不限" value="{{maxCount}}" bindinput="onMaxCountInput" />
+      </view>
+    </view>
+
+    <view class="form-card">
+      <view class="form-item row">
+        <text class="form-label">收集备注</text>
+        <switch checked="{{needRemark}}" bindchange="onRemarkSwitch" color="#07c160" />
+      </view>
+      <view class="form-item" wx:if="{{needRemark}}">
+        <view class="form-row">
+          <text class="form-label required">备注提示语</text>
+        </view>
+        <input class="form-input" placeholder="如：请填写口味偏好" value="{{remarkHint}}" bindinput="onRemarkHintInput" />
+      </view>
+    </view>
+
+    <view class="form-card">
+      <view class="form-item row">
+        <text class="form-label">自定义收集字段</text>
+        <view class="add-field-btn" bindtap="addField">+ 添加字段</view>
+      </view>
+      <view class="field-item" wx:for="{{fields}}" wx:key="index">
+        <view class="field-row">
+          <input class="field-name-input" placeholder="字段名称（如姓名）" value="{{item.name}}" bindinput="onFieldNameInput" data-idx="{{index}}" maxlength="20" />
+          <view class="field-right">
+            <text class="field-required-label">必填</text>
+            <switch checked="{{item.required}}" bindchange="onFieldRequiredSwitch" data-idx="{{index}}" color="#07c160" style="transform: scale(0.7);" />
+            <text class="field-remove" catchtap="removeField" data-idx="{{index}}">✕</text>
+          </view>
+        </view>
+      </view>
+      <view class="field-tip" wx:if="{{fields.length === 0}}">
+        <text>可添加姓名、学号、手机号等自定义字段</text>
+      </view>
+    </view>
+
+    <view class="submit-area">
+      <button class="submit-btn" bindtap="submitCreate" disabled="{{submitting}}">
+        {{submitting ? '创建中...' : '创建接龙'}}
+      </button>
+    </view>
+  </view>
+</view>

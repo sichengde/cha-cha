@@ -1,0 +1,101 @@
+<view class="page-container">
+  <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="navbar-content">
+      <view class="navbar-left" bindtap="{{isDirectEntry ? 'goHome' : 'goBack'}}">
+        <image class="{{isDirectEntry ? 'home-icon' : 'back-icon'}}" src="/assets/icons/{{isDirectEntry ? 'home' : 'back'}}.svg" mode="aspectFit"></image>
+      </view>
+      <view class="navbar-title">接龙详情</view>
+      <view class="navbar-right"></view>
+    </view>
+  </view>
+
+  <view class="detail-content" wx:if="{{jielong}}">
+    <!-- 接龙信息卡片 -->
+    <view class="info-card">
+      <view class="info-title">{{jielong.title}}</view>
+      <view class="info-desc" wx:if="{{jielong.description}}">{{jielong.description}}</view>
+      <view class="info-meta">
+        <view class="meta-item" wx:if="{{jielong.deadline}}">
+          <text class="meta-label">截止时间：</text>
+          <text class="meta-value">{{jielong.deadline}}</text>
+        </view>
+        <view class="meta-item" wx:if="{{jielong.max_count}}">
+          <text class="meta-label">人数上限：</text>
+          <text class="meta-value">{{memberCount}}/{{jielong.max_count}}</text>
+        </view>
+        <view class="meta-item">
+          <text class="status-tag {{isClosed ? 'closed' : 'open'}}">{{isClosed ? '已关闭' : '进行中'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 接龙名单 -->
+    <view class="member-card">
+      <view class="card-header">
+        <text class="card-title">接龙名单（{{memberCount}}人）</text>
+        <view class="manage-btn" wx:if="{{isCreator}}" bindtap="goToManage">
+          <text>管理</text>
+        </view>
+      </view>
+
+      <view class="member-list">
+        <view class="member-item" wx:for="{{members}}" wx:key="id">
+          <text class="member-seq">{{item.seq}}</text>
+          <image class="member-avatar" src="{{item.avatar || '/assets/icons/user.png'}}" mode="aspectFill"></image>
+          <view class="member-info">
+            <text class="member-name">{{item.displayName}}</text>
+            <text class="member-remark" wx:if="{{item.remark}}">{{item.remark}}</text>
+          </view>
+          <text class="member-time">{{item.joined_at}}</text>
+        </view>
+        <view class="empty-tip" wx:if="{{members.length === 0}}">
+          <text>暂无接龙</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 发起人操作区 -->
+    <view class="creator-actions" wx:if="{{isCreator}}">
+      <button class="action-btn toggle-btn" bindtap="onToggleStatus">
+        {{isClosed ? '重新开启' : '关闭接龙'}}
+      </button>
+      <button class="action-btn export-btn" bindtap="onExport">导出Excel</button>
+      <button class="action-btn share-btn" open-type="share">分享接龙</button>
+    </view>
+
+    <!-- 参与操作区 -->
+    <view class="join-area">
+      <button class="join-btn joined" wx:if="{{isJoined}}" bindtap="onQuitTap">取消接龙</button>
+      <button class="join-btn" wx:elif="{{isClosed}}" disabled>接龙已关闭</button>
+      <button class="join-btn" wx:elif="{{isFull}}" disabled>已满员</button>
+      <button class="join-btn active" wx:else bindtap="onJoinTap">我要接龙</button>
+    </view>
+  </view>
+
+  <view class="loading-tip" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 信息填写弹窗 -->
+  <view class="popup-mask" wx:if="{{showRemarkPopup}}" bindtap="hideRemarkPopup">
+    <view class="popup-content" catchtap="preventTap">
+      <view class="popup-title">填写接龙信息</view>
+      <view class="popup-fields" wx:if="{{jielong.fields && jielong.fields.length > 0}}">
+        <view class="popup-field-item" wx:for="{{jielong.fields}}" wx:key="name">
+          <view class="popup-field-label">
+            <text class="{{item.required ? 'required' : ''}}">{{item.name}}</text>
+          </view>
+          <input class="popup-field-input" placeholder="请输入{{item.name}}" value="{{fieldValues[item.name]}}" bindinput="onFieldInput" data-name="{{item.name}}" maxlength="100" />
+        </view>
+      </view>
+      <view wx:if="{{jielong.need_remark}}">
+        <view class="popup-field-label">{{jielong.remark_hint || '请填写备注'}}</view>
+        <textarea class="popup-textarea" placeholder="请输入备注" value="{{remarkInput}}" bindinput="onRemarkInput" maxlength="200" />
+      </view>
+      <view class="popup-actions">
+        <button class="popup-btn cancel" bindtap="hideRemarkPopup">取消</button>
+        <button class="popup-btn confirm" bindtap="confirmRemark">提交接龙</button>
+      </view>
+    </view>
+  </view>
+</view>

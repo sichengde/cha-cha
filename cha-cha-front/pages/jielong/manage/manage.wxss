@@ -1,0 +1,124 @@
+.page-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.custom-navbar {
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx;
+}
+
+.navbar-left { width: 60rpx; }
+.back-icon { width: 40rpx; height: 40rpx; }
+.navbar-title { font-size: 34rpx; font-weight: 600; color: #333; }
+.navbar-right { width: 80rpx; text-align: right; }
+
+.export-btn {
+  font-size: 28rpx;
+  color: #07c160;
+}
+
+.manage-content {
+  padding: 24rpx 32rpx;
+}
+
+.summary-bar {
+  padding: 20rpx 0;
+  margin-bottom: 16rpx;
+}
+
+.summary-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.member-list {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 0 32rpx;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.member-item:last-child {
+  border-bottom: none;
+}
+
+.member-seq {
+  font-size: 26rpx;
+  color: #999;
+  width: 50rpx;
+  flex-shrink: 0;
+}
+
+.member-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  background: #f0f0f0;
+}
+
+.member-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.member-name {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: 500;
+  display: block;
+}
+
+.member-remark {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-top: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-time {
+  font-size: 22rpx;
+  color: #ccc;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.remove-btn {
+  flex-shrink: 0;
+  margin-left: 20rpx;
+  padding: 12rpx 24rpx;
+  border: 1rpx solid #e53935;
+  border-radius: 24rpx;
+}
+
+.remove-text {
+  font-size: 24rpx;
+  color: #e53935;
+}
+
+.empty-tip {
+  text-align: center;
+  padding: 60rpx 0;
+  color: #999;
+  font-size: 28rpx;
+}

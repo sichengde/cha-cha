@@ -10,6 +10,13 @@
   <view class="content">
     <view class="menu-section">
       <view class="menu-group">
+        <view class="menu-item profile-item">
+          <view class="avatar-container">
+            <image class="profile-avatar" src="{{userInfo.avatar_url || '/assets/icons/user.png'}}" mode="aspectFill"></image>
+            <button class="avatar-btn-overlay" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
+          </view>
+          <input class="nickname-input" type="nickname" placeholder="点击设置昵称" value="{{userInfo.nickname}}" bindchange="onNicknameChange" />
+        </view>
         <view class="menu-item menu-share-item">
           <view class="menu-icon">
             <image src="/assets/icons/share.svg" class="menu-icon-img"></image>

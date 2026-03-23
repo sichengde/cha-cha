@@ -3,6 +3,7 @@ var api = require('../../../utils/api')
 var statsApi = api.statsApi
 var queryApi = api.queryApi
 var util = require('../../../utils/util')
+var formatBeijingDateTime = util.formatBeijingDateTime
 var getStatusBarHeight = util.getStatusBarHeight
 var goBack = util.goBack
 
@@ -109,7 +110,7 @@ Page({
               id: row[idKey] || 'ID' + (index + 1),
               queried: !!row._queried,
               signed: !!row._signed,
-              queryTime: row._queryTime || '',
+              queryTime: formatBeijingDateTime(row._queryTime) || '',
               modified: false
             }
           })

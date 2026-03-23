@@ -112,7 +112,42 @@ const SCHEMA_SQL = [
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '导出时间',
     INDEX idx_user_id (user_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='导出记录表'`
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='导出记录表'`,
+
+  `CREATE TABLE IF NOT EXISTS jielong (
+    id VARCHAR(36) PRIMARY KEY COMMENT '接龙唯一ID',
+    title VARCHAR(60) NOT NULL COMMENT '接龙标题',
+    description VARCHAR(400) COMMENT '活动描述',
+    creator_id VARCHAR(36) NOT NULL COMMENT '发起人用户ID',
+    deadline TIMESTAMP NULL COMMENT '截止时间',
+    max_count INT NULL COMMENT '人数上限',
+    need_remark BOOLEAN DEFAULT FALSE COMMENT '是否收集备注',
+    remark_hint VARCHAR(100) COMMENT '备注提示语',
+    fields TEXT COMMENT '自定义字段JSON数组',
+    status ENUM('open', 'closed') DEFAULT 'open' COMMENT '状态：进行中/已关闭',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_creator_id (creator_id),
+    INDEX idx_status (status),
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='接龙表'`,
+
+  `CREATE TABLE IF NOT EXISTS jielong_member (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '记录唯一ID',
+    jielong_id VARCHAR(36) NOT NULL COMMENT '关联接龙ID',
+    user_id VARCHAR(36) NOT NULL COMMENT '参与者用户ID',
+    nickname VARCHAR(100) COMMENT '参与者昵称',
+    avatar VARCHAR(500) COMMENT '头像URL',
+    remark VARCHAR(200) COMMENT '备注内容',
+    field_values TEXT COMMENT '自定义字段填JSON',
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '报名时间',
+    is_deleted BOOLEAN DEFAULT FALSE COMMENT '是否被发起人删除',
+    INDEX idx_jielong_id (jielong_id),
+    INDEX idx_user_id (user_id),
+    UNIQUE KEY uk_jielong_user (jielong_id, user_id),
+    FOREIGN KEY (jielong_id) REFERENCES jielong(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='接龙报名记录表'`
 ]
 
 // 对于已存在的库，确保索引/约束完整（幂等操作，可重复执行）
@@ -132,6 +167,11 @@ const ensureIndexes = async (connection, dbName) => {
       table: 'query_data',
       indexName: 'idx_query_page_row',
       alterSQL: 'ALTER TABLE query_data ADD INDEX idx_query_page_row (query_page_id, row_index)'
+    },
+    {
+      table: 'jielong_member',
+      indexName: 'uk_jielong_user',
+      alterSQL: 'ALTER TABLE jielong_member ADD UNIQUE KEY uk_jielong_user (jielong_id, user_id)'
     }
   ]
 
@@ -153,6 +193,27 @@ const ensureIndexes = async (connection, dbName) => {
       } else if (error.code !== 'ER_DUP_KEYNAME') {
         throw error
       }
+    }
+  }
+
+  // 确保新增列存在（兼容已有数据库）
+  const columnConfigs = [
+    { table: 'jielong', column: 'fields', alterSQL: "ALTER TABLE jielong ADD COLUMN fields TEXT COMMENT '自定义字段JSON数组' AFTER remark_hint" },
+    { table: 'jielong_member', column: 'field_values', alterSQL: "ALTER TABLE jielong_member ADD COLUMN field_values TEXT COMMENT '自定义字段填写JSON' AFTER remark" }
+  ]
+
+  for (const config of columnConfigs) {
+    const [existing] = await connection.query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_schema = ? AND table_name = ? AND column_name = ? LIMIT 1`,
+      [dbName, config.table, config.column]
+    )
+    if (existing.length > 0) continue
+    try {
+      await connection.query(config.alterSQL)
+      console.log(`已添加列: ${config.table}.${config.column}`)
+    } catch (error) {
+      if (error.code !== 'ER_DUP_FIELDNAME') throw error
     }
   }
 }

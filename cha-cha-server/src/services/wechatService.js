@@ -153,10 +153,55 @@ async function getOpenidByCode(code) {
   }
 }
 
+async function generateJielongQrCodeBuffer(jielongId) {
+  const accessToken = await getWechatAccessToken()
+  const { envVersion } = getWechatConfig()
+  const sceneValue = jielongId.replace(/-/g, '')
+  const requestBody = {
+    scene: sceneValue,
+    page: 'pages/jielong/join/join',
+    width: 430,
+    env_version: envVersion || 'trial',
+    check_path: false
+  }
+
+  console.log('[生成接龙二维码] 请求参数:', JSON.stringify(requestBody))
+
+  const response = await fetch(
+    `https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=${encodeURIComponent(accessToken)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    }
+  )
+
+  if (!response.ok) {
+    throw createError('生成小程序码失败', 'WECHAT_QRCODE_HTTP_ERROR')
+  }
+
+  const contentType = response.headers.get('content-type') || ''
+  const buffer = Buffer.from(await response.arrayBuffer())
+
+  if (contentType.indexOf('application/json') > -1) {
+    let errorData = null
+    try {
+      errorData = JSON.parse(buffer.toString('utf8'))
+    } catch (e) {
+      errorData = null
+    }
+    console.error('[生成接龙二维码] 微信API错误:', errorData)
+    throw createError((errorData && errorData.errmsg) || '生成小程序码失败', 'WECHAT_QRCODE_API_ERROR')
+  }
+
+  return buffer
+}
+
 module.exports = {
   getWechatConfig,
   getQueryMiniProgramPath,
   generateQueryUrlLink,
   generateQueryQrCodeBuffer,
+  generateJielongQrCodeBuffer,
   getOpenidByCode
 }

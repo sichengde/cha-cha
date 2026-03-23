@@ -11,7 +11,12 @@
     "pages/myqueries/myqueries",
     "pages/about/about",
     "pages/manage/manage",
-    "pages/manage/stats/stats"
+    "pages/manage/stats/stats",
+    "pages/jielong/create/create",
+    "pages/jielong/detail/detail",
+    "pages/jielong/join/join",
+    "pages/jielong/manage/manage",
+    "pages/jielong/mine/mine"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -33,7 +38,7 @@
       },
       {
         "pagePath": "pages/myqueries/myqueries",
-        "text": "查询",
+        "text": "记录",
         "iconPath": "assets/icons/query.png",
         "selectedIconPath": "assets/icons/query-active.png"
       },

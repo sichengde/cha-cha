@@ -1,5 +1,6 @@
 var app = getApp()
 var queryApi = require('../../utils/api').queryApi
+var jielongApi = require('../../utils/api').jielongApi
 var fileApi = require('../../utils/api').fileApi
 var util = require('../../utils/util')
 var formatBeijingDateTime = util.formatBeijingDateTime
@@ -9,7 +10,9 @@ Page({
   data: {
     isLoggedIn: false,
     userInfo: null,
-    recentQueries: [],
+    recentItems: [],
+    itemPage: 1,
+    hasMoreItems: true,
     statusBarHeight: 44,
     loading: false,
     uploading: false,
@@ -39,7 +42,8 @@ Page({
       })
 
       if (isLoggedIn) {
-        that.loadRecentQueries()
+        that.setData({ recentItems: [], itemPage: 1, hasMoreItems: true })
+        that.loadRecentItems()
       }
     }).catch(function() {
       that.setData({
@@ -50,31 +54,79 @@ Page({
     })
   },
 
-  loadRecentQueries: function() {
+  loadRecentItems: function() {
     var that = this
+    if (!this.data.hasMoreItems) return
     this.setData({ loading: true })
 
-    queryApi.getMyList({
-      status: '',
-      page: 1,
-      pageSize: 5
-    }).then(function(data) {
-      if (data.success) {
-        var recentQueries = (data.data.list || []).map(function(item) {
-          return Object.assign({}, item, {
+    var page = this.data.itemPage
+    var pageSize = 10
+    var queryPromise = queryApi.getMyList({ status: '', page: page, pageSize: pageSize })
+    var jielongCreatedPromise = jielongApi.getMyList({ page: page, pageSize: pageSize })
+    var jielongJoinedPromise = jielongApi.getMyList({ type: 'joined', page: page, pageSize: pageSize })
+
+    Promise.all([queryPromise, jielongCreatedPromise, jielongJoinedPromise]).then(function(results) {
+      var items = []
+      var queryTotal = 0
+      var jielongTotal = 0
+      if (results[0] && results[0].success) {
+        queryTotal = results[0].data.total || 0
+        ;(results[0].data.list || []).forEach(function(item) {
+          items.push(Object.assign({}, item, {
+            _type: 'query',
+            _name: item.name || '查询',
+            _key: 'q_' + item.id,
+            _sortTime: new Date(item.created_at || item.create_time || 0).getTime(),
             displayCreatedAt: formatBeijingDateTime(item.created_at || item.create_time) || '刚刚'
-          })
+          }))
         })
-        that.setData({
-          recentQueries: recentQueries,
-          loading: false
-        })
-      } else {
-        that.setData({ loading: false })
       }
+      // 合并创建的和参与的接龙，去重
+      var jielongMap = {}
+      var allJielongs = []
+      ;[results[1], results[2]].forEach(function(r) {
+        if (r && r.success) {
+          ;(r.data.list || []).forEach(function(item) {
+            if (!jielongMap[item.id]) {
+              jielongMap[item.id] = true
+              allJielongs.push(item)
+            }
+          })
+          var t = r.data.total || 0
+          if (t > jielongTotal) jielongTotal = t
+        }
+      })
+      allJielongs.forEach(function(item) {
+        items.push(Object.assign({}, item, {
+          _type: 'jielong',
+          _name: item.title || '接龙',
+          _key: 'j_' + item.id,
+          _sortTime: new Date(item.created_at || item.create_time || 0).getTime(),
+          displayCreatedAt: formatBeijingDateTime(item.created_at || item.create_time) || '刚刚'
+        }))
+      })
+      items.sort(function(a, b) { return b._sortTime - a._sortTime })
+
+      var existing = page === 1 ? [] : that.data.recentItems
+      var merged = existing.concat(items)
+      var loadedCount = page * pageSize
+      var hasMore = loadedCount < queryTotal || loadedCount < jielongTotal
+
+      that.setData({
+        recentItems: merged,
+        loading: false,
+        hasMoreItems: hasMore
+      })
     }).catch(function() {
       that.setData({ loading: false })
     })
+  },
+
+  onReachBottom: function() {
+    if (this.data.hasMoreItems && !this.data.loading) {
+      this.setData({ itemPage: this.data.itemPage + 1 })
+      this.loadRecentItems()
+    }
   },
 
   goToLogin: function() {
@@ -169,10 +221,19 @@ Page({
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
   },
 
-  goToManage: function(e) {
+  goToItem: function(e) {
     var id = e.currentTarget.dataset.id
+    var type = e.currentTarget.dataset.type
+    if (type === 'jielong') {
+      wx.navigateTo({ url: '/pages/jielong/detail/detail?id=' + id })
+    } else {
+      wx.navigateTo({ url: '/pages/manage/manage?id=' + id })
+    }
+  },
+
+  goToJielong: function() {
     wx.navigateTo({
-      url: '/pages/manage/manage?id=' + id
+      url: '/pages/jielong/create/create'
     })
   }
 })

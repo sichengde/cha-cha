@@ -2,13 +2,14 @@
   <view class="custom-navbar" style="padding-top: {{statusBarHeight}}px;">
     <view class="navbar-content">
       <view class="navbar-left"></view>
-      <view class="navbar-title">查询</view>
+      <view class="navbar-title">记录</view>
       <view class="navbar-right"></view>
     </view>
   </view>
 
   <view class="search-bar">
-    <input class="search-input" placeholder="搜索查询名称" value="{{searchText}}" bindinput="onSearch" />
+    <input class="search-input" placeholder="搜索名称" value="{{searchText}}" bindinput="onSearchInput" bindconfirm="onSearchConfirm" />
+    <view class="search-btn" bindtap="onSearchConfirm">搜索</view>
   </view>
 
   <view class="filter-tabs">
@@ -18,12 +19,15 @@
   </view>
 
   <view class="query-list" wx:if="{{filteredQueries.length > 0}}">
-    <view class="query-card" wx:for="{{filteredQueries}}" wx:key="id" bindtap="goToManage" data-id="{{item.id}}">
+    <view class="query-card" wx:for="{{filteredQueries}}" wx:key="_key" bindtap="goToManage" data-id="{{item.id}}" data-type="{{item._type}}">
       <view class="card-header">
-        <text class="query-name">{{item.name}}</text>
+        <view class="name-row">
+          <text class="type-tag {{item._type === 'jielong' ? 'type-jielong' : 'type-query'}}">{{item._type === 'jielong' ? '接龙' : '查询'}}</text>
+          <text class="query-name">{{item.name}}</text>
+        </view>
         <text class="query-status {{item.statusClass}}">{{item.statusText}}</text>
       </view>
-      <view class="card-body">
+      <view class="card-body" wx:if="{{item._type === 'query'}}">
         <view class="stat-row">
           <view class="stat-item">
             <text class="stat-value">{{item.queryCount || 0}}</text>
@@ -39,26 +43,43 @@
           </view>
         </view>
       </view>
+      <view class="card-body" wx:if="{{item._type === 'jielong'}}">
+        <view class="stat-row">
+          <view class="stat-item">
+            <text class="stat-value">{{item.memberCount || 0}}</text>
+            <text class="stat-label">已接龙</text>
+          </view>
+        </view>
+      </view>
       <view class="card-footer">
         <text class="create-time">创建于 {{item.createTime}}</text>
-        <view class="actions">
+        <view class="actions" wx:if="{{item._type === 'query'}}">
           <text class="action-btn" catchtap="shareQuery" data-id="{{item.id}}" data-name="{{item.name}}">分享</text>
-          <text class="action-btn" catchtap="editQuery" data-id="{{item.id}}">编辑</text>
+        </view>
+        <view class="actions" wx:if="{{item._type === 'jielong'}}">
+          <text class="action-btn" catchtap="shareJielong" data-id="{{item.id}}" data-name="{{item.name}}">分享</text>
         </view>
       </view>
     </view>
   </view>
 
-  <view class="empty-state" wx:else>
+  <view class="empty-state" wx:if="{{filteredQueries.length === 0 && !loading}}">
     <image class="empty-icon" src="/assets/images/empty.svg" mode="aspectFit"></image>
-    <text class="empty-text">暂无查询记录</text>
-    <text class="empty-tip">请在首页点击"创建查询"添加</text>
+    <text class="empty-text">暂无记录</text>
+    <text class="empty-tip">请在首页创建查询或接龙</text>
+  </view>
+
+  <view class="load-more-tip" wx:if="{{filteredQueries.length > 0 && loading}}">
+    <text>加载中...</text>
+  </view>
+  <view class="load-more-tip" wx:if="{{filteredQueries.length > 0 && !hasMore && !loading}}">
+    <text>没有更多了</text>
   </view>
 
   <view class="share-modal" wx:if="{{showShareGuide}}">
     <view class="modal-mask" bindtap="hideShareGuide"></view>
     <view class="modal-content" catchtap="preventTap">
-      <view class="share-title">分享查询</view>
+      <view class="share-title">分享{{shareType === 'jielong' ? '接龙' : '查询'}}</view>
       <view class="share-desc">选择分享方式</view>
       <view class="share-btns">
         <button class="btn-share" open-type="share" bindtap="onShareButtonTap">转发到微信</button>
@@ -70,7 +91,7 @@
   <view class="qr-modal" wx:if="{{showQrPreview}}">
     <view class="modal-mask" bindtap="hideQrPreview"></view>
     <view class="qr-panel">
-      <view class="qr-title">查询二维码</view>
+      <view class="qr-title">{{shareType === 'jielong' ? '接龙' : '查询'}}二维码</view>
       <image class="qr-image" src="{{qrPreviewPath}}" mode="widthFix" show-menu-by-longpress="{{true}}"></image>
       <view class="qr-tip">长按二维码图片可手动保存</view>
     </view>

@@ -170,7 +170,27 @@ function downloadFile(url) {
 var userApi = {
   login: function(data) { return request({ url: '/api/users/login', method: 'POST', data: data }) },
   getInfo: function() { return request({ url: '/api/users/info' }) },
-  updateInfo: function(data) { return request({ url: '/api/users/info', method: 'PUT', data: data }) }
+  updateInfo: function(data) { return request({ url: '/api/users/info', method: 'PUT', data: data }) },
+  uploadAvatar: function(filePath) {
+    return new Promise(function(resolve, reject) {
+      var token = wx.getStorageSync('token')
+      wx.uploadFile({
+        url: BASE_URL + REQUEST_PREFIX + '/api/users/avatar',
+        filePath: filePath,
+        name: 'avatar',
+        header: { 'Authorization': 'Bearer ' + token },
+        success: function(res) {
+          if (res.statusCode === 200) {
+            var data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+            resolve(data)
+          } else {
+            reject(new Error('上传失败'))
+          }
+        },
+        fail: function(err) { reject(err) }
+      })
+    })
+  }
 }
 
 var queryApi = {
@@ -212,6 +232,19 @@ var fileApi = {
   downloadExport: function(taskId) { return downloadFile('/api/files/export-download/' + taskId) }
 }
 
+var jielongApi = {
+  create: function(data) { return request({ url: '/api/jielong', method: 'POST', data: data }) },
+  getDetail: function(id) { return request({ url: '/api/jielong/' + id }) },
+  update: function(id, data) { return request({ url: '/api/jielong/' + id, method: 'PUT', data: data }) },
+  delete: function(id) { return request({ url: '/api/jielong/' + id, method: 'DELETE' }) },
+  getMyList: function(params) { return request({ url: '/api/jielong/mine', data: params }) },
+  join: function(id, data) { return request({ url: '/api/jielong/' + id + '/join', method: 'POST', data: data }) },
+  quit: function(id) { return request({ url: '/api/jielong/' + id + '/quit', method: 'POST' }) },
+  removeMember: function(id, memberId) { return request({ url: '/api/jielong/' + id + '/member/' + memberId, method: 'DELETE' }) },
+  exportMembers: function(id) { return downloadFile('/api/jielong/' + id + '/export') },
+  downloadQrCode: function(id) { return downloadFile('/api/jielong/' + id + '/qrcode') }
+}
+
 module.exports = {
   request: request,
   userApi: userApi,
@@ -219,5 +252,6 @@ module.exports = {
   dataApi: dataApi,
   statsApi: statsApi,
   fileApi: fileApi,
+  jielongApi: jielongApi,
   BASE_URL: BASE_URL
 }
