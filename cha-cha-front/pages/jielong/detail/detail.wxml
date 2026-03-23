@@ -54,17 +54,16 @@
       </view>
     </view>
 
-    <!-- 发起人操作区 -->
-    <view class="creator-actions" wx:if="{{isCreator}}">
-      <button class="action-btn toggle-btn" bindtap="onToggleStatus">
-        {{isClosed ? '重新开启' : '关闭接龙'}}
-      </button>
-      <button class="action-btn export-btn" bindtap="onExport">导出Excel</button>
-      <button class="action-btn share-btn" open-type="share">分享接龙</button>
-    </view>
-
-    <!-- 参与操作区 -->
-    <view class="join-area">
+    <!-- 统一操作区 -->
+    <view class="action-area">
+      <!-- 发起人四功能按钮（2×2网格） -->
+      <view class="creator-grid" wx:if="{{isCreator}}">
+        <button class="grid-btn toggle-btn" bindtap="onToggleStatus">{{isClosed ? '重新开启' : '关闭接龙'}}</button>
+        <button class="grid-btn export-btn" bindtap="onExport">导出Excel</button>
+        <button class="grid-btn share-btn" open-type="share">分享接龙</button>
+        <button class="grid-btn delete-btn" bindtap="onDelete">删除接龙</button>
+      </view>
+      <!-- 参与/取消按钮（全宽） -->
       <button class="join-btn joined" wx:if="{{isJoined}}" bindtap="onQuitTap">取消接龙</button>
       <button class="join-btn" wx:elif="{{isClosed}}" disabled>接龙已关闭</button>
       <button class="join-btn" wx:elif="{{isFull}}" disabled>已满员</button>

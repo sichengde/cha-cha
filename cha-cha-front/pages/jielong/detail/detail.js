@@ -166,6 +166,34 @@ Page({
     })
   },
 
+  // 删除接龙（仅发起人）
+  onDelete: function() {
+    var that = this
+    wx.showModal({
+      title: '确认删除',
+      content: '删除后不可恢复，确定要删除该接龙吗？',
+      confirmText: '删除',
+      confirmColor: '#e53935',
+      success: function(res) {
+        if (res.confirm) {
+          jielongApi.delete(that.data.jielongId).then(function(res) {
+            if (res.success) {
+              wx.showToast({ title: '已删除', icon: 'success' })
+              setTimeout(function() {
+                var pages = getCurrentPages()
+                if (pages.length > 1) {
+                  wx.navigateBack()
+                } else {
+                  wx.switchTab({ url: '/pages/index/index' })
+                }
+              }, 1200)
+            }
+          }).catch(function() {})
+        }
+      }
+    })
+  },
+
   // 取消报名
   onQuitTap: function() {
     var that = this

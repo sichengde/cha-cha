@@ -74,10 +74,13 @@
   color: #333;
   font-weight: 500;
   flex-shrink: 0;
+  display: block;
+  margin-bottom: 12rpx;
 }
 
 .form-item.row .form-label {
   margin-bottom: 0;
+  display: inline;
 }
 
 .form-label.required::before {
