@@ -213,7 +213,134 @@ const deleteTempFile = (req, res) => {
   }
 }
 
-const exportData = async (req, res) => {
+// ========== 异步导出任务管理 ==========
+const exportTasks = new Map()
+
+// 定期清理已完成/失败的过期任务（30分钟）
+setInterval(() => {
+  const now = Date.now()
+  for (const [taskId, task] of exportTasks) {
+    if (task.status !== 'processing' && now - task.updatedAt > 30 * 60 * 1000) {
+      exportTasks.delete(taskId)
+    }
+  }
+}, 5 * 60 * 1000)
+
+// 后台生成 XLSX（分批查询数据，避免一次性加载过多）
+const generateExportFile = async (taskId, queryPageId, userId, queryPageName) => {
+  const task = exportTasks.get(taskId)
+  try {
+    task.status = 'processing'
+    task.progress = 5
+    task.updatedAt = Date.now()
+
+    const headers = await query(
+      'SELECT * FROM query_headers WHERE query_page_id = ? ORDER BY column_index',
+      [queryPageId]
+    )
+
+    // 先获取总行数
+    const countResult = await queryOne(
+      'SELECT COUNT(*) as total FROM query_data WHERE query_page_id = ?',
+      [queryPageId]
+    )
+    const totalRows = countResult.total
+    task.progress = 10
+    task.updatedAt = Date.now()
+
+    // 分批查询数据行
+    const BATCH_SIZE = 2000
+    const allDataRows = []
+    for (let offset = 0; offset < totalRows; offset += BATCH_SIZE) {
+      const batch = await query(
+        'SELECT * FROM query_data WHERE query_page_id = ? ORDER BY row_index LIMIT ? OFFSET ?',
+        [queryPageId, BATCH_SIZE, offset]
+      )
+      allDataRows.push(...batch)
+      // 数据查询占 10%-50% 的进度
+      task.progress = 10 + Math.floor((offset + batch.length) / Math.max(totalRows, 1) * 40)
+      task.updatedAt = Date.now()
+    }
+
+    task.progress = 50
+    task.updatedAt = Date.now()
+
+    const queryRecords = await query(
+      'SELECT query_data_id, COUNT(*) as count FROM query_records WHERE query_page_id = ? GROUP BY query_data_id',
+      [queryPageId]
+    )
+
+    const signatures = await query(
+      'SELECT query_data_id, sign_type, signed_at FROM signatures WHERE query_page_id = ?',
+      [queryPageId]
+    )
+
+    task.progress = 60
+    task.updatedAt = Date.now()
+
+    const recordMap = {}
+    queryRecords.forEach(r => { recordMap[r.query_data_id] = r.count })
+
+    const signMap = {}
+    signatures.forEach(s => { signMap[s.query_data_id] = s })
+
+    // 构建 XLSX
+    const headerRow = headers.map(h => h.column_name)
+    headerRow.push('查询次数', '查询状态', '签收状态', '签收时间')
+    const sheetData = [headerRow]
+
+    allDataRows.forEach((row, i) => {
+      const data = JSON.parse(row.data)
+      const rowData = headers.map(h => data[h.column_index] || '')
+      rowData.push(
+        recordMap[row.id] || 0,
+        recordMap[row.id] ? '已查询' : '未查询',
+        signMap[row.id] ? '已签收' : '未签收',
+        signMap[row.id] ? signMap[row.id].signed_at : ''
+      )
+      sheetData.push(rowData)
+
+      // XLSX 构建占 60%-90% 的进度，每 1000 行更新一次
+      if ((i + 1) % 1000 === 0 || i === allDataRows.length - 1) {
+        task.progress = 60 + Math.floor((i + 1) / allDataRows.length * 30)
+        task.updatedAt = Date.now()
+      }
+    })
+
+    task.progress = 90
+    task.updatedAt = Date.now()
+
+    const workbook = XLSX.utils.book_new()
+    const worksheet = XLSX.utils.aoa_to_sheet(sheetData)
+    XLSX.utils.book_append_sheet(workbook, worksheet, '数据')
+
+    const fileName = `${queryPageName}_数据导出_${Date.now()}.xlsx`
+    const exportPath = path.join(exportDir, fileName)
+    XLSX.writeFile(workbook, exportPath)
+
+    await insert('export_records', {
+      user_id: userId,
+      query_page_id: queryPageId,
+      file_name: fileName,
+      file_path: exportPath,
+      export_type: 'data'
+    })
+
+    task.status = 'completed'
+    task.progress = 100
+    task.fileName = fileName
+    task.filePath = exportPath
+    task.updatedAt = Date.now()
+  } catch (error) {
+    console.error('导出任务失败:', error)
+    task.status = 'failed'
+    task.error = '导出数据失败，请重试'
+    task.updatedAt = Date.now()
+  }
+}
+
+// POST /export/:id  —— 发起导出任务
+const startExport = async (req, res) => {
   try {
     const { id } = req.params
     const userId = req.user.id
@@ -230,82 +357,83 @@ const exportData = async (req, res) => {
       })
     }
 
-    const headers = await query(
-      'SELECT * FROM query_headers WHERE query_page_id = ? ORDER BY column_index',
-      [id]
-    )
-
-    const dataRows = await query(
-      'SELECT * FROM query_data WHERE query_page_id = ? ORDER BY row_index',
-      [id]
-    )
-
-    const queryRecords = await query(
-      'SELECT query_data_id, COUNT(*) as count FROM query_records WHERE query_page_id = ? GROUP BY query_data_id',
-      [id]
-    )
-
-    const signatures = await query(
-      'SELECT query_data_id, sign_type, signed_at FROM signatures WHERE query_page_id = ?',
-      [id]
-    )
-
-    const recordMap = {}
-    queryRecords.forEach(r => {
-      recordMap[r.query_data_id] = r.count
+    const taskId = uuidv4()
+    exportTasks.set(taskId, {
+      status: 'processing',
+      progress: 0,
+      userId,
+      queryPageId: id,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     })
 
-    const signMap = {}
-    signatures.forEach(s => {
-      signMap[s.query_data_id] = s
-    })
+    // 在后台执行，不 await
+    generateExportFile(taskId, id, userId, queryPage.name)
 
-    const workbook = XLSX.utils.book_new()
-    
-    const headerRow = headers.map(h => h.column_name)
-    headerRow.push('查询次数', '查询状态', '签收状态', '签收时间')
-    
-    const sheetData = [headerRow]
-
-    dataRows.forEach(row => {
-      const data = JSON.parse(row.data)
-      const rowData = headers.map(h => data[h.column_index] || '')
-      rowData.push(
-        recordMap[row.id] || 0,
-        recordMap[row.id] ? '已查询' : '未查询',
-        signMap[row.id] ? '已签收' : '未签收',
-        signMap[row.id] ? signMap[row.id].signed_at : ''
-      )
-      sheetData.push(rowData)
-    })
-
-    const worksheet = XLSX.utils.aoa_to_sheet(sheetData)
-    XLSX.utils.book_append_sheet(workbook, worksheet, '数据')
-
-    const fileName = `${queryPage.name}_数据导出_${Date.now()}.xlsx`
-    const exportPath = path.join(exportDir, fileName)
-    XLSX.writeFile(workbook, exportPath)
-
-    await insert('export_records', {
-      user_id: userId,
-      query_page_id: id,
-      file_name: fileName,
-      file_path: exportPath,
-      export_type: 'data'
-    })
-
-    res.download(exportPath, fileName, (err) => {
-      if (err) {
-        console.error('下载文件失败:', err)
-      }
+    res.json({
+      success: true,
+      data: { taskId }
     })
   } catch (error) {
-    console.error('导出数据失败:', error)
+    console.error('发起导出失败:', error)
     res.status(500).json({
       success: false,
-      message: '导出数据失败'
+      message: '发起导出失败'
     })
   }
+}
+
+// GET /export-status/:taskId  —— 查询导出进度
+const getExportStatus = (req, res) => {
+  const { taskId } = req.params
+  const userId = req.user.id
+
+  if (!taskId || !UUID_REGEX.test(taskId)) {
+    return res.status(400).json({ success: false, message: '无效的任务ID' })
+  }
+
+  const task = exportTasks.get(taskId)
+  if (!task || task.userId !== userId) {
+    return res.status(404).json({ success: false, message: '任务不存在' })
+  }
+
+  const result = { status: task.status, progress: task.progress }
+  if (task.status === 'completed') {
+    result.fileName = task.fileName
+  } else if (task.status === 'failed') {
+    result.error = task.error
+  }
+
+  res.json({ success: true, data: result })
+}
+
+// GET /export-download/:taskId  —— 下载已完成的导出文件
+const downloadExport = (req, res) => {
+  const { taskId } = req.params
+  const userId = req.user.id
+
+  if (!taskId || !UUID_REGEX.test(taskId)) {
+    return res.status(400).json({ success: false, message: '无效的任务ID' })
+  }
+
+  const task = exportTasks.get(taskId)
+  if (!task || task.userId !== userId) {
+    return res.status(404).json({ success: false, message: '任务不存在' })
+  }
+
+  if (task.status !== 'completed') {
+    return res.status(400).json({ success: false, message: '文件尚未准备好' })
+  }
+
+  if (!fs.existsSync(task.filePath)) {
+    return res.status(404).json({ success: false, message: '文件已过期，请重新导出' })
+  }
+
+  res.download(task.filePath, task.fileName, (err) => {
+    if (err) {
+      console.error('下载文件失败:', err)
+    }
+  })
 }
 
 const startTempFileCleaner = () => {
@@ -353,7 +481,9 @@ const startTempFileCleaner = () => {
 
 module.exports = {
   uploadExcel,
-  exportData,
+  startExport,
+  getExportStatus,
+  downloadExport,
   readFileData,
   deleteTempFile,
   startTempFileCleaner

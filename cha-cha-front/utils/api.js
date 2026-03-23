@@ -21,13 +21,14 @@ function request(options) {
   var data = options.data || {}
   var header = options.header || {}
   var timeout = options.timeout || 60000
+  var shouldShowLoading = options.showLoading !== false
 
   return new Promise(function(resolve, reject) {
     var token = wx.getStorageSync('token')
     var defaultHeader = { 'Content-Type': 'application/json' }
     if (token) defaultHeader['Authorization'] = 'Bearer ' + token
 
-    util.showLoading()
+    if (shouldShowLoading) util.showLoading()
 
     var requestUrl = BASE_URL + REQUEST_PREFIX + url
     var requestData = data
@@ -47,7 +48,7 @@ function request(options) {
       header: Object.assign({}, defaultHeader, header),
       timeout: timeout,
       success: function(res) {
-        util.hideLoading()
+        if (shouldShowLoading) util.hideLoading()
         if (res.statusCode === 200) {
           resolve(res.data)
         } else if (res.statusCode === 401) {
@@ -70,7 +71,7 @@ function request(options) {
         }
       },
       fail: function(err) {
-        util.hideLoading()
+        if (shouldShowLoading) util.hideLoading()
         util.showToast('网络错误，请重试')
         reject(err)
       }
@@ -206,7 +207,9 @@ var statsApi = {
 var fileApi = {
   upload: uploadFile,
   deleteTemp: function(fileId) { return request({ url: '/api/files/temp/' + fileId, method: 'DELETE' }) },
-  exportData: function(id) { return downloadFile('/api/files/export/' + id) }
+  startExport: function(id) { return request({ url: '/api/files/export/' + id, method: 'POST' }) },
+  getExportStatus: function(taskId) { return request({ url: '/api/files/export-status/' + taskId, showLoading: false }) },
+  downloadExport: function(taskId) { return downloadFile('/api/files/export-download/' + taskId) }
 }
 
 module.exports = {

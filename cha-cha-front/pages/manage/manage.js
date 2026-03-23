@@ -40,7 +40,9 @@ Page({
     shareQueryId: '',
     shareQueryName: '',
     showQrPreview: false,
-    qrPreviewPath: ''
+    qrPreviewPath: '',
+    exporting: false,
+    exportProgress: 0
   },
 
   onLoad: function(options) {
@@ -55,6 +57,13 @@ Page({
   onShow: function() {
     if (this.data.queryId && this.data.queryInfo && this.data.queryInfo.id) {
       this.loadQueryInfo(this.data.queryId)
+    }
+  },
+
+  onUnload: function() {
+    if (this._exportPollTimer) {
+      clearInterval(this._exportPollTimer)
+      this._exportPollTimer = null
     }
   },
 
@@ -179,15 +188,82 @@ Page({
   exportData: function() {
     var that = this
     var queryId = this.data.queryId
-    wx.showLoading({ title: '导出中...' })
-    
-    fileApi.exportData(queryId).then(function(tempFilePath) {
-      wx.hideLoading()
-      that.handleExportedFile(tempFilePath)
+
+    if (this.data.exporting) return
+
+    this.setData({ exporting: true, exportProgress: 0 })
+    wx.showLoading({ title: '正在准备导出...', mask: true })
+
+    fileApi.startExport(queryId).then(function(res) {
+      if (res.success && res.data && res.data.taskId) {
+        that._pollExportStatus(res.data.taskId)
+      } else {
+        wx.hideLoading()
+        that.setData({ exporting: false })
+        wx.showToast({ title: '发起导出失败', icon: 'none' })
+      }
     }).catch(function() {
       wx.hideLoading()
+      that.setData({ exporting: false })
       wx.showToast({ title: '导出失败', icon: 'none' })
     })
+  },
+
+  _pollExportStatus: function(taskId) {
+    var that = this
+    var pollCount = 0
+    var maxPolls = 360
+
+    var doPoll = function() {
+      pollCount++
+      if (pollCount > maxPolls) {
+        clearInterval(that._exportPollTimer)
+        that._exportPollTimer = null
+        wx.hideLoading()
+        that.setData({ exporting: false, exportProgress: 0 })
+        wx.showToast({ title: '导出超时，请重试', icon: 'none' })
+        return
+      }
+
+      fileApi.getExportStatus(taskId).then(function(res) {
+        if (!res.success || !res.data) return
+
+        var status = res.data.status
+        var progress = res.data.progress || 0
+
+        that.setData({ exportProgress: progress })
+        wx.showLoading({ title: '导出中 ' + progress + '%', mask: true })
+
+        if (status === 'completed') {
+          clearInterval(that._exportPollTimer)
+          that._exportPollTimer = null
+          wx.showLoading({ title: '下载文件中...', mask: true })
+
+          fileApi.downloadExport(taskId).then(function(tempFilePath) {
+            wx.hideLoading()
+            that.setData({ exporting: false, exportProgress: 0 })
+            that.handleExportedFile(tempFilePath)
+          }).catch(function() {
+            wx.hideLoading()
+            that.setData({ exporting: false, exportProgress: 0 })
+            wx.showToast({ title: '下载失败', icon: 'none' })
+          })
+        } else if (status === 'failed') {
+          clearInterval(that._exportPollTimer)
+          that._exportPollTimer = null
+          wx.hideLoading()
+          that.setData({ exporting: false, exportProgress: 0 })
+          wx.showToast({ title: res.data.error || '导出失败', icon: 'none' })
+        }
+      }).catch(function() {
+        // 轮询网络错误忽略，继续下次轮询
+      })
+    }
+
+    setTimeout(function() {
+      doPoll()
+      that._exportPollTimer = setInterval(doPoll, 1000)
+    }, 500)
   },
 
   shareQuery: function() {

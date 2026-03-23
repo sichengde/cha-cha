@@ -41,6 +41,8 @@ const upload = multer({
 
 router.post('/upload', authMiddleware, upload.single('file'), fileController.uploadExcel)
 router.delete('/temp/:fileId', authMiddleware, fileController.deleteTempFile)
-router.get('/export/:id', authMiddleware, fileController.exportData)
+router.post('/export/:id', authMiddleware, fileController.startExport)
+router.get('/export-status/:taskId', authMiddleware, fileController.getExportStatus)
+router.get('/export-download/:taskId', authMiddleware, fileController.downloadExport)
 
 module.exports = router
