@@ -12,6 +12,8 @@ async function clearData() {
 
   try {
     await connection.execute('SET FOREIGN_KEY_CHECKS = 0')
+    await connection.execute('DELETE FROM export_records')
+    await connection.execute('DELETE FROM data_modifications')
     await connection.execute('DELETE FROM signatures')
     await connection.execute('DELETE FROM query_records')
     await connection.execute('DELETE FROM query_data')
