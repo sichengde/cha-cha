@@ -2,6 +2,7 @@ var app = getApp()
 var api = require('../../utils/api')
 var queryApi = api.queryApi
 var dataApi = api.dataApi
+var getStatusBarHeight = require('../../utils/util').getStatusBarHeight
 
 Page({
   data: {
@@ -24,10 +25,7 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemSetting = wx.getSystemSetting()
-    this.setData({
-      statusBarHeight: systemSetting.statusBarHeight || 44
-    })
+    this.setData({ statusBarHeight: getStatusBarHeight() })
     
     var queryId = options.id
     if (!queryId && options.scene) {
@@ -378,5 +376,14 @@ Page({
     wx.switchTab({
       url: '/pages/index/index'
     })
+  },
+
+  onShareAppMessage: function() {
+    var queryInfo = this.data.queryInfo
+    var title = (queryInfo && queryInfo.name) || '班班通丨线上收集'
+    return {
+      title: title,
+      path: '/pages/query/query?id=' + this.data.queryId
+    }
   }
 })

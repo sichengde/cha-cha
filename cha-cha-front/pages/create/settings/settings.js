@@ -5,34 +5,9 @@ var util = require('../../../utils/util')
 var getQueryPath = util.getQueryPath
 var showQrPreviewFromTempFile = util.showQrPreviewFromTempFile
 var hideQrPreviewState = util.hideQrPreview
-
-function formatDateTime(date) {
-  if (!date) return ''
-  var year = date.getFullYear()
-  var month = date.getMonth() + 1
-  var day = date.getDate()
-  var hour = date.getHours()
-  var minute = date.getMinutes()
-
-  return year + '-' +
-    (month < 10 ? '0' + month : month) + '-' +
-    (day < 10 ? '0' + day : day) + ' ' +
-    (hour < 10 ? '0' + hour : hour) + ':' +
-    (minute < 10 ? '0' + minute : minute)
-}
-
-function formatDateTimeNoYear(date) {
-  if (!date) return ''
-  var month = date.getMonth() + 1
-  var day = date.getDate()
-  var hour = date.getHours()
-  var minute = date.getMinutes()
-
-  return (month < 10 ? '0' + month : month) + '-' +
-    (day < 10 ? '0' + day : day) + ' ' +
-    (hour < 10 ? '0' + hour : hour) + ':' +
-    (minute < 10 ? '0' + minute : minute)
-}
+var getStatusBarHeight = util.getStatusBarHeight
+var formatDateTime = util.formatDateTime
+var formatDateTimeNoYear = util.formatDateTimeNoYear
 
 function toPickerValue(date) {
   if (!date) return [0, 0, 0, 0, 0]
@@ -100,10 +75,7 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemSetting = wx.getSystemSetting()
-    this.setData({
-      statusBarHeight: systemSetting.statusBarHeight || 44
-    })
+    this.setData({ statusBarHeight: getStatusBarHeight() })
     this.initDateTimePicker()
     wx.updateShareMenu({ withShareTicket: true })
 
@@ -750,7 +722,7 @@ Page({
     var queryId = this.data.createdQueryId || app.globalData.createdQueryId
     var path = queryId ? getQueryPath(queryId) : '/pages/index/index'
     return {
-      title: this.data.name || '小丽表格',
+      title: this.data.name || '班班通丨线上收集',
       path: path
     }
   }

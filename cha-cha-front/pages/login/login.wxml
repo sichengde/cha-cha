@@ -1,7 +1,7 @@
 <view class="login-container">
   <view class="login-header">
     <image class="logo" src="/assets/images/logo.svg" mode="aspectFit"></image>
-    <text class="app-name">小丽表格</text>
+    <text class="app-name">班班通丨线上收集</text>
     <text class="app-desc">轻量化信息查询与确认工具</text>
   </view>
 

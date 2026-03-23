@@ -3,9 +3,9 @@
     <view class="navbar-content">
       <view class="navbar-left">
         <view class="logo">
-          <text class="logo-text">查</text>
+          <text class="logo-text">班</text>
         </view>
-        <text class="app-name">小丽表格</text>
+        <text class="app-name">班班通丨线上收集</text>
       </view>
     </view>
   </view>

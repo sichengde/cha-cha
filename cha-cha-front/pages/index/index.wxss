@@ -233,7 +233,7 @@
 }
 
 .complete-icon {
-  background: #e8f8e8;
+  background: #07c160;
   border-radius: 50%;
 }
 

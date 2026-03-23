@@ -3,7 +3,7 @@ const cors = require('cors')
 const helmet = require('helmet')
 const rateLimit = require('express-rate-limit')
 const path = require('path')
-const { readEnvInt } = require('./config/env')
+const { readEnvInt, readEnvString } = require('./config/env')
 
 const userRoutes = require('./routes/userRoutes')
 const queryRoutes = require('./routes/queryRoutes')
@@ -20,8 +20,10 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }))
 
+const corsOrigin = readEnvString('CORS_ORIGIN', '*')
+
 app.use(cors({
-  origin: '*',
+  origin: corsOrigin === '*' ? '*' : corsOrigin.split(',').map(s => s.trim()),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Openid']
 }))
@@ -44,11 +46,12 @@ const limiter = rateLimit({
 app.use('/chacha/api/', limiter)
 
 app.use('/chacha/uploads', express.static(path.join(__dirname, '../uploads')))
+app.use('/chacha/exports', express.static(path.join(__dirname, '../exports')))
 
 app.get('/chacha/', function(req, res) {
   res.json({
     success: true,
-    message: '小丽表格 API 服务',
+    message: '班班通丨线上收集 API 服务',
     version: '1.0.0',
     endpoints: {
       users: '/chacha/api/users',

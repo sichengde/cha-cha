@@ -1,7 +1,9 @@
 var app = getApp()
 var queryApi = require('../../utils/api').queryApi
 var fileApi = require('../../utils/api').fileApi
-var formatBeijingDateTime = require('../../utils/util').formatBeijingDateTime
+var util = require('../../utils/util')
+var formatBeijingDateTime = util.formatBeijingDateTime
+var getStatusBarHeight = util.getStatusBarHeight
 
 Page({
   data: {
@@ -17,10 +19,7 @@ Page({
   },
 
   onLoad: function() {
-    var systemSetting = wx.getSystemSetting()
-    this.setData({
-      statusBarHeight: systemSetting.statusBarHeight || 44
-    })
+    this.setData({ statusBarHeight: getStatusBarHeight() })
   },
 
   onShow: function() {
@@ -175,20 +174,5 @@ Page({
     wx.navigateTo({
       url: '/pages/manage/manage?id=' + id
     })
-  },
-
-  onShareAppMessage: function(e) {
-    if (e.from === 'button') {
-      var id = e.target.dataset.id
-      var name = e.target.dataset.name || '来查查'
-      return {
-        title: name,
-        path: '/pages/query/query?id=' + id
-      }
-    }
-    return {
-      title: '小丽表格',
-      path: '/pages/index/index'
-    }
   }
 })

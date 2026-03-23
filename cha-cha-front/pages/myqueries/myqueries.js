@@ -5,9 +5,9 @@ var getStatusText = util.getStatusText
 var getStatusClass = util.getStatusClass
 var formatBeijingDateTime = util.formatBeijingDateTime
 var getQueryPath = util.getQueryPath
-var openShareMenu = util.showQueryShareActionSheet
 var showQrPreviewFromTempFile = util.showQrPreviewFromTempFile
 var hideQrPreviewState = util.hideQrPreview
+var getStatusBarHeight = util.getStatusBarHeight
 
 Page({
   data: {
@@ -28,10 +28,7 @@ Page({
   },
 
   onLoad: function() {
-    var systemSetting = wx.getSystemSetting()
-    this.setData({
-      statusBarHeight: systemSetting.statusBarHeight || 44
-    })
+    this.setData({ statusBarHeight: getStatusBarHeight() })
   },
 
   onShow: function() {
@@ -142,15 +139,9 @@ Page({
   },
 
   shareQuery: function(e) {
-    var that = this
     var id = e.currentTarget.dataset.id
     var name = e.currentTarget.dataset.name || ''
-    
-    openShareMenu(function() {
-      that.openShareGuide(id, name)
-    }, function() {
-      that.generateQueryQrCode(id)
-    })
+    this.openShareGuide(id, name)
   },
 
   openShareGuide: function(queryId, queryName) {
@@ -179,6 +170,16 @@ Page({
   onShareButtonTap: function() {
     this.hideShareGuide()
   },
+
+  onGenerateQrCode: function() {
+    var queryId = this.data.shareQueryId
+    this.hideShareGuide()
+    if (queryId) {
+      this.generateQueryQrCode(queryId)
+    }
+  },
+
+  preventTap: function() {},
 
   editQuery: function(e) {
     var id = e.currentTarget.dataset.id
@@ -212,20 +213,5 @@ Page({
         }
       }
     })
-  },
-
-  onShareAppMessage: function() {
-    var queryId = this.data.shareQueryId
-    if (queryId) {
-      return {
-        title: this.data.shareQueryName || '小丽表格',
-        path: getQueryPath(queryId)
-      }
-    }
-
-    return {
-      title: '小丽表格 - 轻量化信息查询工具',
-      path: '/pages/index/index'
-    }
   }
 })

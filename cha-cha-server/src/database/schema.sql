@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS query_data (
   modified_at TIMESTAMP NULL COMMENT '最后修改时间',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   INDEX idx_query_page_id (query_page_id),
+  INDEX idx_query_page_row (query_page_id, row_index),
   FOREIGN KEY (query_page_id) REFERENCES query_pages(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='查询数据表';
 

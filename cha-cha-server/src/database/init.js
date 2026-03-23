@@ -14,6 +14,11 @@ const ensureUniqueIndexes = async (connection, dbName) => {
       table: 'signatures',
       indexName: 'uk_signature_page_data',
       alterSQL: 'ALTER TABLE signatures ADD UNIQUE KEY uk_signature_page_data (query_page_id, query_data_id)'
+    },
+    {
+      table: 'query_data',
+      indexName: 'idx_query_page_row',
+      alterSQL: 'ALTER TABLE query_data ADD INDEX idx_query_page_row (query_page_id, row_index)'
     }
   ]
 

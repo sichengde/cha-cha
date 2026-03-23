@@ -1,23 +1,22 @@
+var util = require('../../utils/util')
+var getStatusBarHeight = util.getStatusBarHeight
+var goBack = util.goBack
+
 Page({
   data: {
     statusBarHeight: 44
   },
 
   onLoad: function() {
-    var systemSetting = wx.getSystemSetting()
-    this.setData({
-      statusBarHeight: systemSetting.statusBarHeight || 44
-    })
+    this.setData({ statusBarHeight: getStatusBarHeight() })
   },
 
-  goBack: function() {
-    wx.navigateBack()
-  },
+  goBack: goBack,
 
   goToAgreement: function() {
     wx.showModal({
       title: '用户协议',
-      content: '感谢您使用小丽表格。使用本服务即表示您同意遵守相关条款和规定。',
+      content: '感谢您使用班班通丨线上收集。使用本服务即表示您同意遵守相关条款和规定。',
       showCancel: false
     })
   },

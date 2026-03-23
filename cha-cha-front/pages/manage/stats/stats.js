@@ -2,6 +2,9 @@ var app = getApp()
 var api = require('../../../utils/api')
 var statsApi = api.statsApi
 var queryApi = api.queryApi
+var util = require('../../../utils/util')
+var getStatusBarHeight = util.getStatusBarHeight
+var goBack = util.goBack
 
 Page({
   data: {
@@ -22,10 +25,7 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemSetting = wx.getSystemSetting()
-    this.setData({
-      statusBarHeight: systemSetting.statusBarHeight || 44
-    })
+    this.setData({ statusBarHeight: getStatusBarHeight() })
 
     if (options.id) {
       this.setData({ queryId: options.id })
@@ -33,9 +33,7 @@ Page({
     }
   },
 
-  goBack: function() {
-    wx.navigateBack()
-  },
+  goBack: goBack,
 
   loadStats: function(queryId) {
     var that = this

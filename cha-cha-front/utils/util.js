@@ -1,3 +1,44 @@
+var getStatusBarHeight = function() {
+  try {
+    var systemSetting = wx.getSystemSetting()
+    return systemSetting.statusBarHeight || 44
+  } catch (e) {
+    return 44
+  }
+}
+
+var formatDateTime = function(date) {
+  if (!date) return ''
+  var year = date.getFullYear()
+  var month = date.getMonth() + 1
+  var day = date.getDate()
+  var hour = date.getHours()
+  var minute = date.getMinutes()
+
+  return year + '-' +
+    pad2(month) + '-' +
+    pad2(day) + ' ' +
+    pad2(hour) + ':' +
+    pad2(minute)
+}
+
+var formatDateTimeNoYear = function(date) {
+  if (!date) return ''
+  var month = date.getMonth() + 1
+  var day = date.getDate()
+  var hour = date.getHours()
+  var minute = date.getMinutes()
+
+  return pad2(month) + '-' +
+    pad2(day) + ' ' +
+    pad2(hour) + ':' +
+    pad2(minute)
+}
+
+var goBack = function() {
+  wx.navigateBack()
+}
+
 var showToast = function(title, icon, duration) {
   icon = icon || 'none'
   duration = duration || 2000
@@ -86,19 +127,6 @@ var getQueryPath = function(queryId) {
   return '/pages/query/query?id=' + queryId
 }
 
-var showQueryShareActionSheet = function(onShare, onQrCode) {
-  wx.showActionSheet({
-    itemList: ['转发给好友', '生成二维码'],
-    success: function(res) {
-      if (res.tapIndex === 0) {
-        if (typeof onShare === 'function') onShare()
-      } else if (res.tapIndex === 1) {
-        if (typeof onQrCode === 'function') onQrCode()
-      }
-    }
-  })
-}
-
 var cacheFileForPreview = function(tempFilePath) {
   return new Promise(function(resolve) {
     wx.saveFile({
@@ -131,6 +159,10 @@ var hideQrPreview = function(page) {
 }
 
 module.exports = {
+  getStatusBarHeight: getStatusBarHeight,
+  formatDateTime: formatDateTime,
+  formatDateTimeNoYear: formatDateTimeNoYear,
+  goBack: goBack,
   showToast: showToast,
   showLoading: showLoading,
   hideLoading: hideLoading,
@@ -140,7 +172,6 @@ module.exports = {
   parseDateTime: parseDateTime,
   formatBeijingDateTime: formatBeijingDateTime,
   getQueryPath: getQueryPath,
-  showQueryShareActionSheet: showQueryShareActionSheet,
   showQrPreviewFromTempFile: showQrPreviewFromTempFile,
   hideQrPreview: hideQrPreview
 }

@@ -22,7 +22,7 @@
           <view class="menu-icon">
             <image src="/assets/icons/about.svg" class="menu-icon-img"></image>
           </view>
-          <view class="menu-text">关于查查</view>
+          <view class="menu-text">关于班班通</view>
           <view class="menu-arrow">›</view>
         </view>
       </view>

@@ -4,9 +4,15 @@ const XLSX = require('xlsx')
 const { v4: uuidv4 } = require('uuid')
 const { query, queryOne, insert } = require('../config/database')
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 const uploadDir = path.join(__dirname, '../../uploads')
+const exportDir = path.join(__dirname, '../../exports')
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true })
+}
+if (!fs.existsSync(exportDir)) {
+  fs.mkdirSync(exportDir, { recursive: true })
 }
 
 const uploadExcel = async (req, res) => {
@@ -148,6 +154,10 @@ const findHeaderRow = (rows, worksheet) => {
 }
 
 const readFileData = (fileId, headerRowIndex) => {
+  if (!UUID_REGEX.test(fileId)) {
+    throw new Error('文件ID格式无效')
+  }
+
   const files = fs.readdirSync(uploadDir)
   const targetFile = files.find(f => f.startsWith(fileId + '.'))
   
@@ -175,10 +185,10 @@ const deleteTempFile = (req, res) => {
   try {
     const { fileId } = req.params
     
-    if (!fileId) {
+    if (!fileId || !UUID_REGEX.test(fileId)) {
       return res.status(400).json({
         success: false,
-        message: '缺少文件ID'
+        message: '缺少或无效的文件ID'
       })
     }
     
@@ -273,7 +283,7 @@ const exportData = async (req, res) => {
     XLSX.utils.book_append_sheet(workbook, worksheet, '数据')
 
     const fileName = `${queryPage.name}_数据导出_${Date.now()}.xlsx`
-    const exportPath = path.join(uploadDir, fileName)
+    const exportPath = path.join(exportDir, fileName)
     XLSX.writeFile(workbook, exportPath)
 
     await insert('export_records', {
@@ -300,27 +310,36 @@ const exportData = async (req, res) => {
 
 const startTempFileCleaner = () => {
   const CLEAN_INTERVAL = 10 * 60 * 1000
-  const FILE_EXPIRE_TIME = 60 * 60 * 1000
+  const UPLOAD_EXPIRE_TIME = 60 * 60 * 1000
+  const EXPORT_EXPIRE_TIME = 24 * 60 * 60 * 1000
 
-  const cleanExpiredFiles = () => {
-    try {
-      const files = fs.readdirSync(uploadDir)
-      const now = Date.now()
-      let cleanedCount = 0
+  const cleanDir = (dir, expireTime) => {
+    if (!fs.existsSync(dir)) return 0
+    const files = fs.readdirSync(dir)
+    const now = Date.now()
+    let cleanedCount = 0
 
-      files.forEach(file => {
-        const filePath = path.join(uploadDir, file)
+    files.forEach(file => {
+      const filePath = path.join(dir, file)
+      try {
         const stats = fs.statSync(filePath)
-        const fileAge = now - stats.mtimeMs
-
-        if (fileAge > FILE_EXPIRE_TIME) {
+        if (now - stats.mtimeMs > expireTime) {
           fs.unlinkSync(filePath)
           cleanedCount++
         }
-      })
+      } catch (e) {}
+    })
 
-      if (cleanedCount > 0) {
-        console.log(`[临时文件清理] 已清理 ${cleanedCount} 个过期文件`)
+    return cleanedCount
+  }
+
+  const cleanExpiredFiles = () => {
+    try {
+      const uploadCleaned = cleanDir(uploadDir, UPLOAD_EXPIRE_TIME)
+      const exportCleaned = cleanDir(exportDir, EXPORT_EXPIRE_TIME)
+
+      if (uploadCleaned > 0 || exportCleaned > 0) {
+        console.log(`[临时文件清理] 已清理 ${uploadCleaned} 个上传文件，${exportCleaned} 个导出文件`)
       }
     } catch (error) {
       console.error('[临时文件清理] 清理失败:', error.message)
@@ -329,7 +348,7 @@ const startTempFileCleaner = () => {
 
   cleanExpiredFiles()
   setInterval(cleanExpiredFiles, CLEAN_INTERVAL)
-  console.log('[临时文件清理] 定时清理任务已启动，每10分钟检查一次，清理超过1小时的文件')
+  console.log('[临时文件清理] 定时清理任务已启动，上传文件1小时过期，导出文件24小时过期')
 }
 
 module.exports = {

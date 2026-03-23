@@ -8,9 +8,8 @@
     <view class="success-desc">转发分享给大家查询吧 ~ 如需修改可点「管理-编辑」</view>
 
     <view class="share-section">
-      <button class="share-btn" open-type="share">
-        <image class="share-icon" src="/assets/icons/wechat.svg" mode="aspectFit"></image>
-        <text class="share-label">转发到微信</text>
+      <button class="share-btn" bindtap="closeModal">
+        <text class="share-label">返回首页</text>
       </button>
     </view>
 

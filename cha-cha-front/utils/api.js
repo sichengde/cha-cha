@@ -1,6 +1,18 @@
 var util = require('./util')
-//var BASE_URL = 'http://192.168.1.14:3000'
-var BASE_URL = 'https://wx.sygdsoft.com'
+
+// 根据小程序运行环境自动切换 BASE_URL
+var BASE_URL = (function() {
+  try {
+    var accountInfo = wx.getAccountInfoSync()
+    var envVersion = (accountInfo && accountInfo.miniProgram && accountInfo.miniProgram.envVersion) || 'release'
+    if (envVersion === 'develop' || envVersion === 'trial') {
+      return 'http://10.3.4.59:3000'  // 开发/体验环境，可按需替换为测试服务器地址
+    }
+    return 'https://wx.sygdsoft.com'
+  } catch (e) {
+    return 'https://wx.sygdsoft.com'
+  }
+})()
 var REQUEST_PREFIX = '/chacha'
 
 function request(options) {
@@ -41,6 +53,15 @@ function request(options) {
         } else if (res.statusCode === 401) {
           wx.removeStorageSync('userInfo')
           wx.removeStorageSync('token')
+          // 同步重置全局状态
+          try {
+            var app = getApp()
+            if (app) {
+              app.globalData.userInfo = null
+              app.globalData.isLoggedIn = false
+              app.globalData.loginPromise = null
+            }
+          } catch (e) {}
           wx.navigateTo({ url: '/pages/login/login' })
           reject(new Error('登录已过期'))
         } else {

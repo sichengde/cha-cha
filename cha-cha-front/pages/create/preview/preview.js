@@ -1,5 +1,6 @@
 var app = getApp()
 var fileApi = require('../../../utils/api').fileApi
+var getStatusBarHeight = require('../../../utils/util').getStatusBarHeight
 
 Page({
   data: {
@@ -24,10 +25,7 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemSetting = wx.getSystemSetting()
-    this.setData({
-      statusBarHeight: systemSetting.statusBarHeight || 44
-    })
+    this.setData({ statusBarHeight: getStatusBarHeight() })
     this.initData()
   },
 

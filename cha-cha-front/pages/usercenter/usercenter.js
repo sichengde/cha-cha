@@ -1,13 +1,13 @@
+var util = require('../../utils/util')
+var getStatusBarHeight = util.getStatusBarHeight
+
 Page({
   data: {
     statusBarHeight: 44
   },
 
   onLoad: function() {
-    var systemSetting = wx.getSystemSetting()
-    this.setData({
-      statusBarHeight: systemSetting.statusBarHeight || 44
-    })
+    this.setData({ statusBarHeight: getStatusBarHeight() })
   },
 
   goToAbout: function() {
@@ -20,7 +20,7 @@ Page({
 
   onShareAppMessage: function() {
     return {
-      title: '小丽表格 - 轻量化信息查询工具',
+      title: '班班通丨线上收集 - 轻量化信息查询工具',
       path: '/pages/index/index'
     }
   }

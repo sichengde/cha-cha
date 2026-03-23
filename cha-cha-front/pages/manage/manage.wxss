@@ -412,60 +412,58 @@
   justify-content: center;
 }
 
-.modal-mask {
+.share-modal .modal-mask {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
 }
 
-.modal-panel {
+.share-modal .modal-content {
   position: relative;
-  width: 620rpx;
+  width: 600rpx;
   background: #fff;
-  border-radius: 20rpx;
-  padding: 40rpx 36rpx 30rpx;
-  box-sizing: border-box;
+  border-radius: 24rpx;
+  padding: 60rpx 40rpx;
+  text-align: center;
 }
 
-.modal-title {
-  font-size: 32rpx;
-  color: #333;
+.share-modal .share-title {
+  font-size: 36rpx;
   font-weight: 600;
-  text-align: center;
+  color: #333;
+  margin-bottom: 16rpx;
 }
 
-.modal-desc {
-  margin-top: 16rpx;
-  margin-bottom: 28rpx;
-  font-size: 26rpx;
-  line-height: 1.5;
-  color: #666;
-  text-align: center;
+.share-modal .share-desc {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 40rpx;
 }
 
-.modal-share-btn,
-.modal-cancel-btn {
-  height: 86rpx;
-  border-radius: 43rpx;
-  font-size: 30rpx;
+.share-btns {
+  display: flex;
+  gap: 18rpx;
+}
+
+.share-btns .btn-share,
+.share-btns .btn-secondary {
+  flex: 1;
+  height: 88rpx;
+  padding: 0;
+  border: none;
+  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+  border-radius: 44rpx;
+  font-size: 31rpx;
+  font-weight: 600;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 
-.modal-share-btn {
-  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
-  color: #fff;
-}
-
-.modal-cancel-btn {
-  margin-top: 16rpx;
-  background: #f2f2f2;
-  color: #666;
-}
-
-.modal-share-btn::after,
-.modal-cancel-btn::after {
+.share-btns .btn-share::after,
+.share-btns .btn-secondary::after {
   border: none;
 }
 
@@ -478,8 +476,15 @@
   justify-content: center;
 }
 
+.qr-modal .modal-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .qr-panel {
   position: relative;
+  z-index: 1;
   width: 620rpx;
   background: #fff;
   border-radius: 22rpx;

@@ -99,7 +99,7 @@ const queryData = async (req, res) => {
     }
 
     if (openid) {
-      let existingRecord = await queryOne(
+      const existingRecord = await queryOne(
         'SELECT * FROM query_records WHERE query_page_id = ? AND query_data_id = ? AND openid = ?',
         [id, dataRow.id, openid]
       )
@@ -112,12 +112,24 @@ const queryData = async (req, res) => {
       }
 
       if (existingRecord) {
-        await update(
-          'query_records',
-          { query_count: existingRecord.query_count + 1, query_time: new Date() },
-          'id = ?',
-          [existingRecord.id]
-        )
+        // 原子递增，避免竞态条件
+        if (queryLimit > 0) {
+          const result = await query(
+            'UPDATE `query_records` SET `query_count` = `query_count` + 1, `query_time` = NOW() WHERE id = ? AND `query_count` < ?',
+            [existingRecord.id, queryLimit]
+          )
+          if (result.affectedRows === 0) {
+            return res.status(429).json({
+              success: false,
+              message: '查询次数已达上限'
+            })
+          }
+        } else {
+          await query(
+            'UPDATE `query_records` SET `query_count` = `query_count` + 1, `query_time` = NOW() WHERE id = ?',
+            [existingRecord.id]
+          )
+        }
       } else {
         try {
           await insert('query_records', {
@@ -128,19 +140,11 @@ const queryData = async (req, res) => {
           })
         } catch (error) {
           if (error.code === 'ER_DUP_ENTRY') {
-            existingRecord = await queryOne(
-              'SELECT * FROM query_records WHERE query_page_id = ? AND query_data_id = ? AND openid = ?',
+            // 并发插入冲突，改为原子递增
+            await query(
+              'UPDATE `query_records` SET `query_count` = `query_count` + 1, `query_time` = NOW() WHERE query_page_id = ? AND query_data_id = ? AND openid = ?',
               [id, dataRow.id, openid]
             )
-
-            if (existingRecord) {
-              await update(
-                'query_records',
-                { query_count: existingRecord.query_count + 1, query_time: new Date() },
-                'id = ?',
-                [existingRecord.id]
-              )
-            }
           } else {
             throw error
           }
@@ -208,6 +212,7 @@ const modifyData = async (req, res) => {
     const { id, dataId } = req.params
     const { modifications } = req.body
     const modifierId = req.user?.id || req.user?.openid || ''
+    const openid = req.user?.openid || ''
 
     const queryPage = await queryOne(
       'SELECT * FROM query_pages WHERE id = ?',
@@ -226,6 +231,20 @@ const modifyData = async (req, res) => {
         success: false,
         message: '不允许修改数据'
       })
+    }
+
+    // 验证用户是否查询过此数据（防止越权修改）
+    if (openid) {
+      const hasQueried = await queryOne(
+        'SELECT 1 FROM query_records WHERE query_page_id = ? AND query_data_id = ? AND openid = ?',
+        [id, dataId, openid]
+      )
+      if (!hasQueried) {
+        return res.status(403).json({
+          success: false,
+          message: '无权修改此数据'
+        })
+      }
     }
 
     if (!Array.isArray(modifications) || modifications.length === 0) {

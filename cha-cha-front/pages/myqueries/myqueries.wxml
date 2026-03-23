@@ -57,11 +57,13 @@
 
   <view class="share-modal" wx:if="{{showShareGuide}}">
     <view class="modal-mask" bindtap="hideShareGuide"></view>
-    <view class="modal-panel">
-      <view class="modal-title">转发查询</view>
-      <view class="modal-desc">点击下方按钮，直接转发给微信好友</view>
-      <button class="modal-share-btn" open-type="share" bindtap="onShareButtonTap">转发给好友</button>
-      <button class="modal-cancel-btn" bindtap="hideShareGuide">取消</button>
+    <view class="modal-content" catchtap="preventTap">
+      <view class="share-title">分享查询</view>
+      <view class="share-desc">选择分享方式</view>
+      <view class="share-btns">
+        <button class="btn-share" open-type="share" bindtap="onShareButtonTap">转发到微信</button>
+        <button class="btn-secondary" bindtap="onGenerateQrCode">生成二维码</button>
+      </view>
     </view>
   </view>
 

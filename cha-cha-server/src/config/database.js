@@ -20,14 +20,21 @@ if (USE_MEMORY_DB) {
     connectTimeout: 10000
   })
 
+  const VALID_IDENTIFIER = /^[a-zA-Z_][a-zA-Z0-9_]*$/
+
+  const escapeIdentifier = (name) => {
+    if (!VALID_IDENTIFIER.test(name)) {
+      throw new Error('非法的标识符: ' + name)
+    }
+    return '`' + name + '`'
+  }
+
   const query = async (sql, params = []) => {
     try {
       const [rows] = await pool.execute(sql, params)
       return rows
     } catch (error) {
-      console.error('SQL执行错误:', error)
-      console.error('SQL:', sql)
-      console.error('参数:', params)
+      console.error('SQL执行错误:', error.message)
       throw error
     }
   }
@@ -41,21 +48,25 @@ if (USE_MEMORY_DB) {
     const keys = Object.keys(data)
     const values = Object.values(data)
     const placeholders = keys.map(() => '?').join(', ')
-    const sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`
+    const escapedTable = escapeIdentifier(table)
+    const escapedKeys = keys.map(k => escapeIdentifier(k)).join(', ')
+    const sql = `INSERT INTO ${escapedTable} (${escapedKeys}) VALUES (${placeholders})`
     const result = await query(sql, values)
     return result.insertId
   }
 
   const update = async (table, data, where, whereParams = []) => {
-    const sets = Object.keys(data).map(key => `${key} = ?`).join(', ')
+    const sets = Object.keys(data).map(key => `${escapeIdentifier(key)} = ?`).join(', ')
     const values = Object.values(data).concat(whereParams)
-    const sql = `UPDATE ${table} SET ${sets} WHERE ${where}`
+    const escapedTable = escapeIdentifier(table)
+    const sql = `UPDATE ${escapedTable} SET ${sets} WHERE ${where}`
     const result = await query(sql, values)
     return result.affectedRows
   }
 
   const remove = async (table, where, whereParams = []) => {
-    const sql = `DELETE FROM ${table} WHERE ${where}`
+    const escapedTable = escapeIdentifier(table)
+    const sql = `DELETE FROM ${escapedTable} WHERE ${where}`
     const result = await query(sql, whereParams)
     return result.affectedRows
   }

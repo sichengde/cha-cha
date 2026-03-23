@@ -5,9 +5,10 @@ var statsApi = api.statsApi
 var fileApi = api.fileApi
 var util = require('../../utils/util')
 var getQueryPath = util.getQueryPath
-var openShareMenu = util.showQueryShareActionSheet
 var showQrPreviewFromTempFile = util.showQrPreviewFromTempFile
 var hideQrPreviewState = util.hideQrPreview
+var getStatusBarHeight = util.getStatusBarHeight
+var goBack = util.goBack
 
 Page({
   data: {
@@ -43,10 +44,7 @@ Page({
   },
 
   onLoad: function(options) {
-    var systemSetting = wx.getSystemSetting()
-    this.setData({
-      statusBarHeight: systemSetting.statusBarHeight || 44
-    })
+    this.setData({ statusBarHeight: getStatusBarHeight() })
 
     if (options.id) {
       this.setData({ queryId: options.id })
@@ -60,9 +58,7 @@ Page({
     }
   },
 
-  goBack: function() {
-    wx.navigateBack()
-  },
+  goBack: goBack,
 
   loadQueryInfo: function(queryId) {
     var that = this
@@ -195,7 +191,6 @@ Page({
   },
 
   shareQuery: function() {
-    var that = this
     var queryId = this.data.queryId
     var queryName = (this.data.queryInfo && this.data.queryInfo.name) || ''
 
@@ -204,11 +199,7 @@ Page({
       return
     }
 
-    openShareMenu(function() {
-      that.openShareGuide(queryId, queryName)
-    }, function() {
-      that.generateQueryQrCode(queryId)
-    })
+    this.openShareGuide(queryId, queryName)
   },
 
   openShareGuide: function(queryId, queryName) {
@@ -226,6 +217,16 @@ Page({
   onShareButtonTap: function() {
     this.hideShareGuide()
   },
+
+  onGenerateQrCode: function() {
+    var queryId = this.data.shareQueryId || this.data.queryId
+    this.hideShareGuide()
+    if (queryId) {
+      this.generateQueryQrCode(queryId)
+    }
+  },
+
+  preventTap: function() {},
 
   generateQueryQrCode: function(queryId) {
     var that = this
@@ -372,7 +373,7 @@ Page({
 
   onShareAppMessage: function() {
     var queryId = this.data.shareQueryId || this.data.queryId
-    var title = this.data.shareQueryName || (this.data.queryInfo && this.data.queryInfo.name) || '小丽表格'
+    var title = this.data.shareQueryName || (this.data.queryInfo && this.data.queryInfo.name) || '班班通丨线上收集'
     return {
       title: title,
       path: queryId ? getQueryPath(queryId) : '/pages/index/index'

@@ -435,8 +435,15 @@
   justify-content: center;
 }
 
+.qr-preview-modal .modal-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .qr-preview-content {
   position: relative;
+  z-index: 1;
   width: 620rpx;
   background: #fff;
   border-radius: 24rpx;
