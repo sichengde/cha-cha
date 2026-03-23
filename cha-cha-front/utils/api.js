@@ -5,7 +5,7 @@ var BASE_URL = (function() {
   try {
     var accountInfo = wx.getAccountInfoSync()
     var envVersion = (accountInfo && accountInfo.miniProgram && accountInfo.miniProgram.envVersion) || 'release'
-    if (envVersion === 'develop' || envVersion === 'trial') {
+    if (envVersion === 'develop') {
       return 'http://10.3.4.59:3000'  // 开发/体验环境，可按需替换为测试服务器地址
     }
     return 'https://wx.sygdsoft.com'
