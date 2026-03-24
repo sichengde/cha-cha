@@ -192,7 +192,7 @@
 }
 
 .grid-btn {
-  width: calc(50% - 8rpx) !important;
+  width: calc(50% - 20rpx) !important;
   height: 72rpx;
   line-height: 72rpx;
   font-size: 26rpx;
