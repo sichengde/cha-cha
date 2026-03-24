@@ -142,20 +142,6 @@ Page({
       return
     }
     
-    wx.showActionSheet({
-      itemList: ['从聊天记录选择', '从本地文件选择'],
-      success: function(res) {
-        if (res.tapIndex === 0) {
-          that.chooseFromChat()
-        } else if (res.tapIndex === 1) {
-          that.chooseFromLocal()
-        }
-      }
-    })
-  },
-
-  chooseFromChat: function() {
-    var that = this
     wx.chooseMessageFile({
       count: 1,
       type: 'file',
@@ -166,20 +152,6 @@ Page({
       },
       fail: function(err) {
         console.log('选择文件取消或失败', err)
-      }
-    })
-  },
-
-  chooseFromLocal: function() {
-    var that = this
-    wx.showModal({
-      title: '上传本地文件',
-      content: '微信小程序暂不支持直接访问手机文件，请先将Excel文件通过微信电脑版或手机文件管理器发送到「文件传输助手」，然后在下一步中选择该文件。',
-      confirmText: '去选择',
-      success: function(res) {
-        if (res.confirm) {
-          that.chooseFromChat()
-        }
       }
     })
   },
