@@ -183,12 +183,11 @@
   margin-bottom: 40rpx;
 }
 
-/* 发起人 2×2 网格 */
+/* 操作按钮网格 */
 .creator-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 20rpx;
-  margin-bottom: 24rpx;
 }
 
 .grid-btn {
@@ -225,33 +224,18 @@
   color: #e53935;
 }
 
-/* 参与者按钮（全宽） */
-.join-btn {
-  width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
-  font-size: 32rpx;
-  font-weight: 600;
-  border-radius: 44rpx;
-  border: none;
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-.join-btn.active {
-  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
-  color: #fff;
-}
-
-.join-btn.joined {
+.quit-btn {
   background: #fff0f0;
   color: #e53935;
-  border: 1rpx solid #e53935;
 }
 
-.join-btn[disabled] {
-  background: #f0f0f0;
+.join-active-btn {
+  background: #e8f8e8;
+  color: #07c160;
+}
+
+.disabled-btn {
+  background: #f5f5f5;
   color: #999;
 }
 

@@ -58,7 +58,8 @@ const uploadExcel = async (req, res) => {
         headers,
         headerRowIndex,
         rowCount: data.length,
-        previewRows: data.slice(0, 15)
+        previewRows: data.slice(0, 15),
+        allRows: allRows.slice(0, 15)
       }
     })
   } catch (error) {
@@ -90,7 +91,6 @@ const findHeaderRow = (rows, worksheet) => {
 
   for (let i = 0; i < Math.min(rows.length, 10); i++) {
     if (isMergedTitleRow(i)) {
-      console.log(`第${i + 1}行是合并单元格标题，跳过`)
       continue
     }
     
@@ -100,7 +100,10 @@ const findHeaderRow = (rows, worksheet) => {
     const nonEmptyCells = row.filter(cell => cell !== undefined && cell !== '' && cell !== null)
     const nonEmptyCount = nonEmptyCells.length
     
-    if (nonEmptyCount < 3) continue
+    if (nonEmptyCount < 2) continue
+    
+    // 检查是否全是字符串（表头通常都是文本）
+    const allStrings = nonEmptyCells.every(cell => typeof cell === 'string')
     
     const nextNonEmptyRows = []
     for (let j = i + 1; j < rows.length && nextNonEmptyRows.length < 3; j++) {
@@ -117,7 +120,7 @@ const findHeaderRow = (rows, worksheet) => {
       return sum + count
     }, 0) / nextNonEmptyRows.length
     
-    const hasConsistentColumns = avgNonEmptyInNextRows >= nonEmptyCount * 0.8
+    const hasConsistentColumns = avgNonEmptyInNextRows >= nonEmptyCount * 0.5
     
     if (!hasConsistentColumns) continue
     
@@ -137,16 +140,20 @@ const findHeaderRow = (rows, worksheet) => {
       }
     }
     
-    const headerCells = nonEmptyCells
-    const avgLength = headerCells.reduce((sum, cell) => sum + String(cell).length, 0) / headerCells.length
-    const isReasonableLength = avgLength < 15
+    // 如果当前行全是字符串且长度合理，很可能是表头
+    if (allStrings && hasConsistentColumns) {
+      const avgLength = nonEmptyCells.reduce((sum, cell) => sum + String(cell).length, 0) / nonEmptyCells.length
+      if (avgLength <= 20) {
+        return i
+      }
+    }
     
-    const hasLongTitle = headerCells.some(cell => String(cell).length > 20)
-    
-    const isSingleCell = nonEmptyCount === 1 && row.length === 1
-    
-    if (!hasLongTitle && !isSingleCell && hasConsistentColumns && (hasNumericData || hasDateData || isReasonableLength)) {
-      return i
+    // 如果后续行有数字或日期数据，而当前行是文本，也认为是表头
+    if (hasConsistentColumns && (hasNumericData || hasDateData)) {
+      const avgLength = nonEmptyCells.reduce((sum, cell) => sum + String(cell).length, 0) / nonEmptyCells.length
+      if (avgLength <= 20) {
+        return i
+      }
     }
   }
   

@@ -197,12 +197,14 @@ Page({
       var newRows = uploadedFile.allRows.slice(selectedIndex + 1)
 
       var displayRows = newRows.slice(0, this.data.pageSize)
+      var origTotal = (uploadedFile.rowCount || 0) + (uploadedFile.headerRowIndex || 0) + 1
+      var newTotal = origTotal - selectedIndex - 1
 
       this.data.rows = newRows
       this.setData({
         headers: newHeaders,
         displayRows: displayRows,
-        totalRows: newRows.length,
+        totalRows: newTotal,
         currentPage: 1,
         hasMore: newRows.length > this.data.pageSize,
         showHeaderSelect: false
